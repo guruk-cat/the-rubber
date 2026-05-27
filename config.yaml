@@ -1,0 +1,9 @@
+# Launch configuration for a ~90 mph four-seam fastball
+# Coordinate system: Statcast convention
+#   origin at home plate, y increases toward pitcher, z is up
+#   pitcher's rubber at y ~= 18.44 m (60.5 ft)
+
+launch:
+  position:         ["0 m", "18.44 m", "1.83 m"]   # center rubber, ~6 ft release height
+  velocity:         ["0 m/s", "-40.23 m/s", "-0.9 m/s"]  # ~90 mph toward plate, slight downward
+  angular_velocity: ["-188.5 rad/s", "0 rad/s", "0 rad/s"]  # ~1800 rpm backspin
