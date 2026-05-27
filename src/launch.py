@@ -25,7 +25,7 @@ def terminate(record):
 def main():
     parser = argparse.ArgumentParser(description='Baseball pitch simulator')
     parser.add_argument('config', help='Path to YAML launch configuration file')
-    parser.add_argument('--plot', '-p', action='store_true', help='Display 3D trajectory plot')
+    parser.add_argument('--plot', '-p', nargs='?', const='animated', choices=['static', 'animated'], help='Display 3D trajectory plot')
     args = parser.parse_args()
 
     with open(args.config) as f:
@@ -46,7 +46,7 @@ def main():
 
     if args.plot:
         plotter = Trajectory3DPlot()
-        plotter.plot([trajectory])
+        plotter.plot([trajectory], animate=(args.plot == 'animated'))
 
 
 if __name__ == '__main__':
