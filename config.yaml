@@ -1,9 +1,17 @@
-# Launch configuration for a ~90 mph four-seam fastball
-# Coordinate system: Statcast convention
-#   origin at home plate, y increases toward pitcher, z is up
-#   pitcher's rubber at y ~= 18.44 m (60.5 ft)
+# Imaginary righty, three-quarter delivery, 6 ft 2 in -- two-seam fastball (sinker)
+# Configured in pitch frame (Mode B: physical / hypothetical parameters).
+# spin_axis [0, 0, -1] in pitch frame -> arm-side sidespin -> down-and-in break vs. righty batter.
 
 launch:
-  position:         ["0 m", "18.44 m", "1.83 m"]   # center rubber, ~6 ft release height
-  velocity:         ["0 m/s", "-40.23 m/s", "-0.9 m/s"]  # ~90 mph toward plate, slight downward
-  angular_velocity: ["-188.5 rad/s", "0 rad/s", "0 rad/s"]  # ~1800 rpm backspin
+  pitch_frame:
+    rubber:         ["0 m", "18.44 m"]  # center of pitcher's rubber (60.5 ft from home plate)
+    pitcher_height: "6 ft 2 in"
+    handedness:     right
+    arm_slot:       "52 degree"         # three-quarter delivery (roughly 45-60 degrees from horizontal)
+    arm_extension:  "6 in"             # forward lean of arm toward plate at release
+    speed:          "97 mph"
+    spin:           "2100 rpm"          # sinkers run lower spin than four-seamers
+    spin_axis:      [0, 0, -1]          # pitch frame: arm-side sidespin (sinker shape)
+    clock_angle:    "0 degree"
+    batter_height:  "6 ft"             # used to compute strike zone centre for velocity aim
+    velocity_target: ["0.3 m", "0 m", "1.7 m"]  # override aim point (world coords); sinkers need extra height to reach plate
