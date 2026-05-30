@@ -2,3 +2,4 @@ numpy
 pint
 plotly
 pyyaml
+pybaseball

@@ -289,7 +289,7 @@ class LaunchConfiguration:
       print("Make sure you didn't mispell something.")
 
   def _resolve_geometry(self):
-    # Returns (release_world_m, arm_dir, M) — all quantities in SI metres.
+    # Returns (release_world_m, arm_dir, M) — all quantities in SI base units.
     arm_slot_rad = self.arm_slot.to('radian').magnitude
 
     if self.arm_length is not None:
@@ -354,4 +354,6 @@ class LaunchConfiguration:
     spin_ax  = self.spin_axis / norm(self.spin_axis)
     clock_R  = rot_axis(yhat, self.clock_angle)
     spin_dir = M @ (clock_R @ spin_ax)
+
+    print("spin = ", spin_dir)
     return float(self.spin.to(unit).magnitude) * (spin_dir / norm(spin_dir))
