@@ -16,12 +16,12 @@ All four keys feed into `arm_dir`, which is used everywhere: back-computing shou
 |---|---|---|---|
 | `handedness` | string | `right` | `right` or `left` |
 | `arm_slot` | quantity (angle) | `45 degree` | Angle of the arm above horizontal at release. `0` is sidearm, `90` is straight overhead. |
-| `arm_extension` | quantity (length) | derived | Forward lean of the arm toward the plate at release. If omitted, estimated as `0.082 * height` (~15 cm for a 182 cm pitcher). |
-| `arm_length` | quantity (length) | derived | Explicit arm length. If omitted, estimated as `0.37 * height`. Only needed to override the estimate. |
+| `arm_extension` | quantity (length) | derived | Forward lean of the arm from shoulder toward the plate at release. If omitted, estimated as `0.082 * height` (~15 cm for a 182 cm pitcher). |
+| `arm_length` | quantity (length) | derived | Explicit arm length. If omitted, estimated as `0.37 * height`. |
 
 ### Position
 
-`position.height` is always required — it is used to derive `arm_length` (unless overridden explicitly), which is needed to back-compute the shoulder position regardless of how the release point is provided.
+`position.height` is the pitcher's height, and is always required — it is used to derive `arm_length` (unless overridden explicitly), which is needed to back-compute the shoulder position regardless of how the release point is provided.
 
 `position.release_pos` is optional. If given, it is used directly as the release point and the shoulder is back-computed from it. If omitted, the release point is estimated from `height`, `rubber`, and `arm_slot`.
 
@@ -32,7 +32,7 @@ position:
   rubber: ["0 m", "18.44 m"]                    # optional; [x, y]; only used when release_pos is absent
 ```
 
-`rubber` defaults to `[0 m, 18.44 m]` (centre of rubber, 60.5 ft from home plate) if omitted.
+`rubber` defaults to `[0 m, 18.44 m]` if omitted.
 
 ### Velocity
 

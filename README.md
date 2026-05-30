@@ -7,9 +7,14 @@ This is a baseball pitch simulator. The repo contains physics simulations, confi
 * Tweak around arm slots, spin rate, etc. to explore visual differences in pitch trajectories.
 * Import data from Statcast to comapre, modify, and play with pitches actually thrown in the MLB.
 * Simulate multiple configurations and compare results.
-* Create imaginary pitcher profiles or test "what if" scenarios based on real pitchers.
+* Create imaginary pitcher profiles or test "what if" scenarios.
 
-While Statcast and Baseball Savant provide precise trackings of pitches and body mechanics, they lack a proper physics engine and therefore the ability to test imagined scenarios and/or perspectives. Such limitations are meant to be overcome with the use of `the-bump`.
+While Statcast and Baseball Savant provide precise trackings of pitches and body mechanics, they lack a proper physics engine and therefore the ability to test imagined scenarios. Some examples include:
+
+* Clayton Kershaw and Hyun-Jin Ryu, who played together for the Dodgers, reportedly shared with each other tips on their respective signature pitches: Kershaw's curveball and Ryu's changeup. But apparently, Kershaw's arm angle was simply not compatible with Ryu's changeup grip. If everything else stayed constant, what might it look like if Kershaw threw with Ryu's spin axis?
+* Trey Yesavage's extremely high release point really confuses batters. Interestingly, his sliders break towards the *arm side* instead of the glove side. At what point does a slider act weirdly like his?
+
+Such questions can be answered with the use of `the-bump`.
 
 ## Authors, History, and Plans
 
@@ -17,12 +22,15 @@ The original physics implementation was written in 2018/2019 by two undergraduat
 
 The present repository is maintained by June Jung. This repository focuses strictly on **accuracy and usability**. Most of the code related to machine learning in `BaseballSimulator` has been stripped away. The following are planned for the future:
 
-* Test and improve the physics engine based on Statcast trackings.
-* Factor in wind and spin-drag (as opposed to velocity-based air drag and Magnus force from spin)
+* Test physics engine based on Statcast trackings.
+* Rebuild constant optimizer and re-define the Magnus term coefficient for a regulation baseball. Current value was calculated from data recorded by older literature. New model will use more recent literature + Statcast trackings.
+* Factor in wind and spin-drag (as opposed to purely velocity-based air drag and Magnus force from spin)
 
 # Try
 
-The below setup will give you a 4-seam fastball and a sinker to compare, thrown by an imaginary pitcher who's 6'2" with a 38-degree arm slot (which is almost sidearm but still three-quarters). You can see what they mean by "tunneling" that confuses batters.
+## Simple two-way comparison
+
+The below setup will give you a 4-seam fastball and a sinker to compare, thrown by an imaginary pitcher who's 6'2" with a 38-degree arm slot (which is nearly sidearm but still three-quarters). You can see what they mean by "tunneling" that confuses batters.
 
 ```bash
 python src/launch.py "configs/examples/*" --plot
@@ -31,3 +39,27 @@ python src/launch.py "configs/examples/*" --plot
 **Expected output** (the GIF had to resample the frame rate, so the animation is slowed down here):
 
 ![example-run-gif](docs/example-run.gif)
+
+## MLB pitchers
+
+You can use `statcast-to-config.py` to create a configuration file from Statcast data. The script relies on the [pybaseball](https://github.com/jldbc/pybaseball) package to retrieve raw values. Examples are usage are below:
+
+List pitches for a pitcher on a given date so you can pick one:
+```bash
+python src/statcast_to_config.py "Yoshinobu Yamamoto" 2026-05-18
+```
+
+Export pitch #89 to stdout:
+```bash
+python src/statcast_to_config.py "Yoshinobu Yamamoto" 2026-05-18 89
+```
+
+Export pitch #89 to a file:
+```bash
+python src/statcast_to_config.py "Yoshinobu Yamamoto" 2026-05-18 89 -o yoshi.yaml
+```
+
+## Resources
+
+See `docs/config-help.md` for making your own configs.
+See `configs/` for configs that are already prepared.

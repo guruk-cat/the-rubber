@@ -7,16 +7,17 @@ USAGE
 List pitches for a pitcher on a given date so you can pick one:
     python src/statcast_to_config.py "Yoshinobu Yamamoto" 2026-05-18
 
-Export pitch #42 to stdout:
+Export pitch #89 to stdout:
     python src/statcast_to_config.py "Yoshinobu Yamamoto" 2026-05-18 89
 
-Export pitch #42 to a file:
-    python src/statcast_to_config.py "Yoshinobu Yamamoto" 2026-05-18 89 -o clay.yaml
+Export pitch #89 to a file:
+    python src/statcast_to_config.py "Yoshinobu Yamamoto" 2026-05-18 89 -o yoshi.yaml
 
 OPTIONS
---height "num with units"
+--height STR
     Pitcher height. Defaults to "6 ft 2 in" with a warning if omitted.
     Statcast does not track this; look it up on Baseball Savant or elsewhere.
+    Use units. The config setup uses pint to automatically convert and strip units.
 
 --arm-slot DEGREES
     Required if Statcast did not record arm_angle for this pitch (common for older data).
