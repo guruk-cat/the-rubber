@@ -42,24 +42,10 @@ python src/launch.py "configs/examples/*" --plot
 
 ## MLB pitchers
 
-You can use `statcast-to-config.py` to create a configuration file from Statcast data. The script relies on the [pybaseball](https://github.com/jldbc/pybaseball) package to retrieve raw values. Examples are usage are below:
-
-List pitches for a pitcher on a given date so you can pick one:
-```bash
-python src/statcast_to_config.py "Yoshinobu Yamamoto" 2026-05-18
-```
-
-Export pitch #89 to stdout:
-```bash
-python src/statcast_to_config.py "Yoshinobu Yamamoto" 2026-05-18 89
-```
-
-Export pitch #89 to a file:
-```bash
-python src/statcast_to_config.py "Yoshinobu Yamamoto" 2026-05-18 89 -o yoshi.yaml
-```
+You can use `statcast-to-config.py` to create a configuration file from Statcast data. The file has a comment block that explains how to use the script. The script relies on the [pybaseball](https://github.com/jldbc/pybaseball) package to retrieve raw values. 
 
 ## Resources
 
 See `docs/config-help.md` for making your own configs.
 See `configs/` for configs that are already prepared.
+See `studies/` for case studies made using the simulator & plotter.
