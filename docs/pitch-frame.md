@@ -1,8 +1,8 @@
-# Pitch Frame
+# Pitch Frame and Spin
 
 ## About
 
-The pitch frame is a rotational coordinate system whose primary purpose is to allow spin axes to be specified relative to the pitcher's delivery angle, rather than in absolute world coordinates. It is not used for the simulation or plotting — only for interpreting spin axis configuration before the simulation runs.
+The pitch frame is a coordinate system whose primary purpose is to allow spin axes to be specified relative to the pitcher's delivery angle, rather than in absolute world coordinates. It is not used for the simulation or plotting — only for interpreting spin axis configuration before the simulation runs.
 
 A separate concern — estimating the release point from pitcher geometry — shares some inputs with the pitch frame (arm slot, handedness) but is conceptually independent. See [Release Point](#release-point) below.
 
@@ -15,6 +15,14 @@ The world frame (or world coordinates) follow Statcast conventions:
 * `+y` towards pitcher (i.e., pitcher throws towards `-y`).
 * `+z` points to the sky.
 
+## Spin axis
+
+Use the right-hand rule for determining the spin axis. For example, a pure back-spin ball according to world frame thrown by a righty pitcher:
+
+* Top of the ball moves towards the pitcher (`+y`) and bottom of the ball moves towards home plate (`-y`).
+* For an observer standing on the pitcher's right side (i.e., standing somewhere in `-x` looking towards `+x`), the ball is rotating counter-clockwise.
+* Right hand rule determines that the spin axis points in the `-x` direction. 
+
 ## Pitch frame
 
 The pitch frame axes are defined as follows:
@@ -23,9 +31,7 @@ The pitch frame axes are defined as follows:
 * `x` axis: perpendicular to the plane containing `y_pitch` and the pitcher's arm direction. This is the pure backspin/topspin axis for a given arm slot. (`+x` still points roughly to the catcher/ump's right side; `+x` points to the sky for a righty side-arm pitcher.)
 * `z` axis: right-hand completion of `x` and `y`; points roughly upward for non-underhand deliveries.
 
-The pitch frame shares its origin with the world frame, so transforming between them is a pure rotation — no translation involved.
-
-The practical value of this frame is that spin axes have intuitive, arm-slot-independent descriptions:
+The pitch frame shares its origin with the world frame, so transforming between them is a pure rotation — no translation involved. The practical value of this frame is that spin axes have intuitive, arm-slot-independent descriptions:
 
 * `[-1, 0, 0]` — pure backspin (four-seam fastball shape)
 * `[1, 0, 0]` — pure topspin
@@ -44,7 +50,7 @@ The release point defines `y_pitch` and is therefore required to build the pitch
 
 In both cases, `arm_slot` is always required — it determines `arm_dir`, which defines the pitch frame orientation for spin axis transformation. If the release point is provided directly and you also want to tweak the arm slot, providing `position.height` (or `arm_length` explicitly) allows the shoulder to be back-computed so a new release point can be derived.
 
-## Spin axis and clock angle
+## Clock angle
 
 `spin_axis` in the config is specified in pitch-frame coordinates. Before being transformed to world coordinates, it can be rotated around `y_pitch` by `clock_angle`, which shifts the axis clockwise or counterclockwise as seen from the pitcher's perspective. The final world-frame spin direction is:
 

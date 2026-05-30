@@ -64,7 +64,7 @@ velocity:
 |---|---|---|---|
 | `spin` | quantity (angular velocity) | `0 rpm` | Spin rate magnitude. |
 | `spin_axis` | list of 3 numbers | `[1, 0, 0]` | Unit vector in **pitch-frame** coordinates. See [pitch-frame.md](pitch-frame.md) for axis conventions. |
-| `clock_angle` | quantity (angle) | `0 degree` | Rotates `spin_axis` around `y_pitch` before transforming to world frame. Positive = counterclockwise from pitcher's perspective. |
+| `clock_angle` | quantity (angle) | `0 degree` | Rotates `spin_axis` around `y_pitch` before transforming to world frame. Positive = clockwise from catcher's perspective (counter-clockwise from pitcher's perspective). |
 
 Common `spin_axis` values (pitch frame, righty pitcher):
 
