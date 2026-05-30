@@ -15,10 +15,11 @@ xhat = numpy.array([1, 0, 0], dtype=float)
 yhat = numpy.array([0, 1, 0], dtype=float)
 zhat = numpy.array([0, 0, 1], dtype=float)
 
-# pitcher body proportion constants
+# pitcher body proportion constants (used when precise values are not provided)
 _K_SH           = 0.63    # shoulder height as fraction of pitcher height during delivery (absorbs knee bend + forward lean)
 _K_ARM          = 0.37    # arm length as fraction of pitcher height
 _K_EXT          = 0.082   # arm extension (forward lean) as fraction of pitcher height (~15 cm for 182 cm pitcher)
+_K_STRIDE       = 0.85    # shoulder stride toward plate as fraction of pitcher height (back-computed from Statcast avg ~5.75 ft extension)
 _MOUND_HEIGHT_M = 0.254   # standard mound height above field level (10 in)
 
 
@@ -309,7 +310,7 @@ class LaunchConfiguration:
       release_world = rp.to('m').magnitude if isinstance(rp, Q_) else numpy.asarray(rp, dtype=float)
     elif self.height is not None:
       height_m  = self.height.to('m').magnitude
-      shoulder  = numpy.array([self.rubber[0], self.rubber[1], _K_SH * height_m + _MOUND_HEIGHT_M])
+      shoulder  = numpy.array([self.rubber[0], self.rubber[1] - _K_STRIDE * height_m, _K_SH * height_m + _MOUND_HEIGHT_M])
       release_world = shoulder + arm_len_m * arm_dir
     else:
       raise ValueError("Cannot resolve release point: provide 'position.release_pos' or 'position.height'.")
