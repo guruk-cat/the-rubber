@@ -25,7 +25,7 @@ The present repository is maintained by June Jung. This repository focuses stric
 The below setup will give you a 4-seam fastball and a sinker to compare, thrown by an imaginary pitcher who's 6'2" with a 38-degree arm slot (which is almost sidearm but still three-quarters). You can see what they mean by "tunneling" that confuses batters.
 
 ```bash
-python src/launch.py "docs/example-configs/*" --plot
+python src/launch.py "configs/examples/*" --plot
 ```
 
 **Expected output** (the GIF had to resample the frame rate, so the animation is slowed down here):
