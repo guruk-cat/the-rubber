@@ -1,6 +1,5 @@
 import re
 import types
-import numbers
 import pint
 import numpy
 from numpy.linalg import norm
