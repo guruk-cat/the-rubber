@@ -13,3 +13,15 @@ This is a baseball pitch simulator. The repo plans to eventually contain physics
 The physics implementation was written by two undergraduate students, **June Jung** and **Richard Whitehill**. The original code was rewritten to provide a cleaner API by **C.D. Clark III**. In 2020, we were working on learning-based models to simulate a batter's response to differnt types of pitchers. The repository can be found at [CD3/BaseballSimulator](https://github.com/CD3/BaseballSimulator). 
 
 The code is now being rewritten again by June Jung. This repository focuses strictly on **accuracy and ease of use**. Most of the code related to machine learning in `BaseballSimulator` has been stripped away. Other parts are currently being written from scratch.
+
+# Try
+
+The below setup will give you a 4-seam fastball and a sinker to compare, thrown by an imaginary pitcher who's 6'2" with a 38-degree arm slot. You can see what they mean by "tunneling" that confuses batters.
+
+```bash
+python src/launch.py "example-configs/*" --plot
+```
+
+**Expected output** (the GIF had to resample the frame rate, so the animation is not super accurate here):
+
+![example-run-gif](docs/example-run.gif)

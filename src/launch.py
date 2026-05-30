@@ -1,4 +1,5 @@
 import argparse
+import glob
 import pathlib
 import sys
 import yaml
@@ -7,8 +8,6 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 
 from Simulator import Simulation, LaunchConfiguration
 from Plotter import Trajectory3DPlot
-
-MOUND_HEIGHT = 0.254  # meters (10 inches above field level)
 
 
 def terminate(record):
@@ -24,29 +23,39 @@ def terminate(record):
 
 def main():
     parser = argparse.ArgumentParser(description='Baseball pitch simulator')
-    parser.add_argument('config', help='Path to YAML launch configuration file')
+    parser.add_argument('configs', nargs='+', help='Path(s) to YAML launch configuration file(s); glob patterns are supported')
     parser.add_argument('--plot', '-p', nargs='?', const='animated', choices=['static', 'animated'], help='Display 3D trajectory plot')
     args = parser.parse_args()
 
-    with open(args.config) as f:
-        cfg = yaml.safe_load(f)
+    # Expand any glob patterns (handles shells that don't expand them, e.g. Windows cmd)
+    config_paths = []
+    for pattern in args.configs:
+        matched = sorted(glob.glob(pattern))
+        config_paths.extend(matched if matched else [pattern])
 
-    sim = Simulation()
-    launch = LaunchConfiguration()
+    trajectories = []
+    for config_path in config_paths:
+        with open(config_path) as f:
+            cfg = yaml.safe_load(f)
 
-    if 'simulation' in cfg:
-        sim.configure(cfg['simulation'])
-    launch.configure(cfg['launch'])
+        sim = Simulation()
+        launch = LaunchConfiguration()
 
-    trajectory = sim.run(launch, terminate)
+        if 'simulation' in cfg:
+            sim.configure(cfg['simulation'])
+        launch.configure(cfg['launch'])
 
-    print(f"Simulation complete: {len(trajectory)} steps, "
-          f"final t={trajectory[-1][0]:.3f}s, "
-          f"final pos=({trajectory[-1][1]:.2f}, {trajectory[-1][2]:.2f}, {trajectory[-1][3]:.2f}) m")
+        trajectory = sim.run(launch, terminate)
+        trajectories.append(trajectory)
+
+        name = pathlib.Path(config_path).name
+        print(f"[{name}] {len(trajectory)} steps, "
+              f"final t={trajectory[-1][0]:.3f}s, "
+              f"final pos=({trajectory[-1][1]:.2f}, {trajectory[-1][2]:.2f}, {trajectory[-1][3]:.2f}) m")
 
     if args.plot:
         plotter = Trajectory3DPlot()
-        plotter.plot([trajectory], animate=(args.plot == 'animated'))
+        plotter.plot(trajectories, animate=(args.plot == 'animated'))
 
 
 if __name__ == '__main__':

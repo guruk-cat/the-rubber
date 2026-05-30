@@ -1,10 +1,8 @@
-# Imaginary righty, 6 ft 2 in
-# Sinker: spin_axis [0, 0, -1] in pitch frame -> arm-side sidespin -> down-and-in break vs. righty batter.
+# sinker, 38 degree arm slot, 92 mph
 
 launch:
   handedness:    right
-  arm_slot:      "60 degree"
-  arm_extension: "6 in"
+  arm_slot:      "38 degree"
 
   position:
     height: "6 ft 2 in"
@@ -13,7 +11,7 @@ launch:
   speed:       "97 mph"
   spin:        "2100 rpm"
   spin_axis:   [0, 0, -1]
-  clock_angle: "0 degree"
+  clock_angle: "25 degree"
 
   velocity:
     target: ["0.3 m", "0 m", "1.7 m"]
