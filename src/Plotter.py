@@ -1,6 +1,5 @@
 import json
 import pathlib
-import tempfile
 import webbrowser
 
 import plotly.graph_objs as go
@@ -191,6 +190,8 @@ scene:
       '</body></html>'
     )
 
-    with tempfile.NamedTemporaryFile(suffix='.html', delete=False, mode='w', encoding='utf-8') as f:
-      f.write(html)
-      webbrowser.open(f.name)
+    tmp_dir = pathlib.Path(__file__).parent.parent / 'tmp'
+    tmp_dir.mkdir(exist_ok=True)
+    tmp_path = tmp_dir / 'viz.html'
+    tmp_path.write_text(html, encoding='utf-8')
+    webbrowser.open(tmp_path.as_uri())
