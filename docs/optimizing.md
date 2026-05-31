@@ -12,7 +12,7 @@ $$ \vec{a} = -g + \alpha |v|^2\hat{v} + \beta \vec{\omega} \times \vec{v} $$
 
 Air drag is proportional to the magnitude of velocity squared, and is in the opposite direction of the velocity. The mangus force is proportional to the cross product of the spin vector (whose direction is defined as the spin axis accoording to the right-hand rule) and the velocity vector.
 
-The two constants in the equation, $\alpha$ and $\beta$, have to be empirically determined. The `src/optimize.py` code exists for this purpose. In the code, the letter *k* is used to denote an unknown constant. In this document, we will assume that $\beta$ is unknown, and will refer to it as the "Magnus term coefficient" or "constant *K*. 
+The two constants in the equation, $\alpha$ and $\beta$, have to be empirically determined. The `optimize.py` code exists for this purpose. In the code, the letter *k* is used to denote an unknown constant. In this document, we will assume that $\beta$ is unknown, and will refer to it as the "Magnus term coefficient" or "constant *K*. 
 
 ## 2. Methods
 
