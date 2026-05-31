@@ -6,7 +6,6 @@ This is a baseball pitch simulator. The repo contains physics simulations, confi
 
 * Tweak around arm slots, spin rate, etc. to explore visual differences in pitch trajectories.
 * Import data from Statcast to comapre, modify, and play with pitches actually thrown in the MLB.
-* Simulate multiple configurations and compare results.
 * Create imaginary pitcher profiles or test "what if" scenarios.
 
 While Statcast and Baseball Savant provide precise trackings of pitches and body mechanics, they lack a proper physics engine and therefore the ability to test imagined scenarios. Some examples include:
@@ -14,7 +13,7 @@ While Statcast and Baseball Savant provide precise trackings of pitches and body
 * Clayton Kershaw and Hyun-Jin Ryu, who played together for the Dodgers, reportedly shared with each other tips on their respective signature pitches: Kershaw's curveball and Ryu's changeup. But apparently, Kershaw's arm angle was simply not compatible with Ryu's changeup grip. If everything else stayed constant, what might it look like if Kershaw threw with Ryu's spin axis?
 * Trey Yesavage's extremely high release point really confuses batters. Interestingly, his sliders break towards the *arm side* instead of the glove side. At what point does a slider act weirdly like his?
 
-Such questions can be answered with the use of `the-bump`.
+The repository contains tools that can help you answer such questions, and more.
 
 ## Authors, History, and Plans
 
@@ -22,7 +21,7 @@ The original physics implementation was written in 2018/2019 by two undergraduat
 
 The present repository is maintained by June Jung. This repository focuses strictly on **accuracy and usability**. Currently being undertaken are the following: 
 * Test physics engine based on Statcast trackings.
-* Rebuild constant optimizer and re-define the Magnus term coefficient for a regulation baseball. Current value was calculated from data recorded by older literature. New model will use more recent literature + Statcast trackings.
+* Rebuild constant optimizer and re-define the Magnus term coefficient for a regulation baseball. Current value was calculated from data recorded by older literature. New model will use more recent literature + Statcast trackings. See [optimizing.md](docs/optimizing.md) for latest work.
 
 The following are planned for the future:
 * Factor in wind 
