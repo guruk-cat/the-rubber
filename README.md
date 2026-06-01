@@ -44,11 +44,13 @@ python src/launch.py "configs/examples/*" --plot
 
 ## MLB pitchers
 
-You can use `statcast-to-config.py` to create a configuration file from Statcast data. The file has a comment block that explains how to use the script. The script relies on the [pybaseball](https://github.com/jldbc/pybaseball) package to retrieve raw values. 
+You can run `src/command.py` to launch a CLI tool that will help you search, select, and configure pitches from the Statcast database.
 
-A CLI script is being built for making everything easier to use.
+The CLI tool uses `src/statcast-to-config.py` to configure its output. You can run this script directly from the terminal with line arguments. The file has a comment block that explains how to use the script. 
 
-## Resources
+The scripts rely on the [pybaseball](https://github.com/jldbc/pybaseball) package to retrieve raw values from the Statcast database. 
+
+## Other Resources
 
 See `docs/config-help.md` for making your own configs.
 See `configs/` for configs that are already prepared.

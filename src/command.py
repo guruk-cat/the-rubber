@@ -8,29 +8,7 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 
-from phys import Simulation, Configuration
 from statcast_to_config import fetch_pitches, pitch_to_config, print_pitch_list
-from plotting import Trajectory3DPlot
-
-
-
-
-
-# Sim helpers
-
-def terminate(record):
-    # termination function for simulation
-    state = record[-1]
-    if state[3] < 0:    # z < 0     : ball hit the ground
-        return True
-    if state[2] < -1:   # y < -1    : ball is at catcher position
-        return True
-    if state[0] > 10:   # t > 10s   : safety valve
-        return True
-    return False
-
-
-
 
 
 # CLI helpers
@@ -134,8 +112,6 @@ class Menu:
 
 
 
-
-
 # Statcast-related
 
 def parse_selection(s):
@@ -150,14 +126,14 @@ def parse_selection(s):
     return sorted(set(nums))
 
 def select_pitches():
-    print("\nSelecting...")
+    print("\nSelecting...\n")
     print("  Enter the numbers of all the pitches you want to select.")
     print("  Ex: 1-6, 33, 34 , 35, 42-53")
     pitch_nums = user_input()
     pitches = parse_selection(pitch_nums)
 
-    delete_lines(8) 
-    print("\nThe following pitches have been selected:")
+    delete_lines(9) 
+    print("\nThe following pitches have been selected:\n")
     print("  " + ", ".join(str(p) for p in pitches))
     user_continue = yes_or_no("  Continue?")
 
@@ -215,18 +191,20 @@ def menu_build_config(df, pitches):
 
     clear_cli()
     print(f"\nSaved {saved} config(s) to {out_dir}")
+    print("Press ENTER to return to the main menu")
+    user_input()
 
 def search_statcast(inject=None, fetch_only=False):
     title = "Fetch from the Statcast database"
     clear_cli()
     if inject is None:
-        print(f"\n{title.upper()}\n")
+        print(f"\n{title.upper()}")
     else:
         print(inject)
-        print(f"{title.upper()}\n")
+        print(f"{title.upper()}")
 
-    pitcher = simple_question("Enter the name of the pitcher...")
-    date = simple_question("Enter the date of the game (YYYY-MM-DD)...")
+    pitcher = simple_question("  Enter the name of the pitcher...")
+    date = simple_question("  Enter the date of the game (YYYY-MM-DD)...")
     clear_cli()
 
     try:
@@ -253,39 +231,21 @@ def search_statcast(inject=None, fetch_only=False):
 def fetch_and_go():
     search_statcast(fetch_only=True)
 
-
-
-
-
-# High-level menus
+def preferences():
+    return
 
 statcast_menu = Menu("Start with data from Statcast", [
     ("Search and select", search_statcast),
-    ("Fetch\n     (use this if you already know specific pitch count numbers)", fetch_and_go)
-])
-
-scratch_menu = Menu("Create a pitcher profile from scratch", [
-
-])
-
-load_config_menu = Menu("Load, modify, or run configurations from disc", [
-
-])
-
-home = Menu("Home menu",[
-    (statcast_menu.title, statcast_menu.run_menu),
-    (scratch_menu.title, scratch_menu.run_menu),
-    (load_config_menu.title, load_config_menu.run_menu),
+    ("Fetch only\n     (use this if you already know specific pitch count numbers)", fetch_and_go),
+    ("Preferences", preferences),
     ("Exit", exit_cli)
 ], suppress_back_key=True)
 
 
 
-
-
 def main():
     while True:
-        home.run_menu()
+        statcast_menu.run_menu()
 
 if __name__ == '__main__':
     main()
