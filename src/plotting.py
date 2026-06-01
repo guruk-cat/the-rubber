@@ -11,6 +11,7 @@ _STRIKE_ZONE_HALF_WIDTH = 0.2159  # half of 17 inches
 _STRIKE_ZONE_BOTTOM     = 0.4572  # 1.5 ft
 _STRIKE_ZONE_TOP        = 1.0668  # 3.5 ft
 _BASEBALL_RADIUS        = 0.03683 # 2.9 inch diameter
+_PLATE_Y                = 0.2159  # middle of plate (8.5 inches from back tip); Statcast 2026+
 
 plot_layout_yaml = '''
 scene:
@@ -51,9 +52,10 @@ class Trajectory3DPlot:
     w = _STRIKE_ZONE_HALF_WIDTH
     b = _STRIKE_ZONE_BOTTOM
     t = _STRIKE_ZONE_TOP
+    p = _PLATE_Y
     outline = go.Scatter3d(
       x=[-w, -w,  w,  w, -w],
-      y=[ 0,  0,  0,  0,  0],
+      y=[ p,  p,  p,  p,  p],
       z=[ b,  t,  t,  b,  b],
       mode='lines',
       line=dict(color='blue', width=3),
@@ -61,7 +63,7 @@ class Trajectory3DPlot:
     )
     fill = go.Mesh3d(
       x=[-w, -w,  w,  w],
-      y=[ 0,  0,  0,  0],
+      y=[ p,  p,  p,  p],
       z=[ b,  t,  t,  b],
       i=[0, 0], j=[1, 2], k=[2, 3],
       color='blue', opacity=0.1,
@@ -71,11 +73,11 @@ class Trajectory3DPlot:
 
   def _crossing_point(self, traj):
     y = traj[:, 2]
-    above = numpy.where(y >= 0)[0]
+    above = numpy.where(y >= _PLATE_Y)[0]
     if not len(above) or above[-1] + 1 >= len(traj):
       return None
     i = above[-1]
-    alpha = y[i] / (y[i] - y[i + 1])
+    alpha = (y[i] - _PLATE_Y) / (y[i] - y[i + 1])
     x = float(traj[i, 1] + alpha * (traj[i + 1, 1] - traj[i, 1]))
     z = float(traj[i, 3] + alpha * (traj[i + 1, 3] - traj[i, 3]))
     return (x, z)
@@ -88,7 +90,7 @@ class Trajectory3DPlot:
     theta = numpy.linspace(0, 2 * numpy.pi, 64)
     return go.Scatter3d(
       x=x + _BASEBALL_RADIUS * numpy.cos(theta),
-      y=numpy.zeros(64),
+      y=numpy.full(64, _PLATE_Y),
       z=z + _BASEBALL_RADIUS * numpy.sin(theta),
       mode='lines',
       line=dict(color='red', width=3),
@@ -171,9 +173,10 @@ class Trajectory3DPlot:
         'top': _STRIKE_ZONE_TOP,
       },
       'crossings': [
-        ({'x': pt[0], 'z': pt[1]} if (pt := self._crossing_point(a)) else None)
+        ({'x': pt[0], 'z': pt[1], 'y': _PLATE_Y} if (pt := self._crossing_point(a)) else None)
         for a in arrays
       ],
+      'plateY': _PLATE_Y,
       'baseballRadius': float(_BASEBALL_RADIUS),
       'fps': fps,
     }

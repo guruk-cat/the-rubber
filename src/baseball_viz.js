@@ -40,13 +40,14 @@
     );
   }
 
-  function buildStrikeZone(sz) {
+  function buildStrikeZone(sz, plateY) {
     const { halfWidth: w, bottom: bot, top } = sz;
+    const p = plateY;
     const corners = [
-      new THREE.Vector3(-w, 0, bot),
-      new THREE.Vector3(-w, 0, top),
-      new THREE.Vector3( w, 0, top),
-      new THREE.Vector3( w, 0, bot),
+      new THREE.Vector3(-w, p, bot),
+      new THREE.Vector3(-w, p, top),
+      new THREE.Vector3( w, p, top),
+      new THREE.Vector3( w, p, bot),
     ];
     const outline = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([...corners, corners[0]]),
@@ -56,8 +57,8 @@
 
     const fillGeo = new THREE.BufferGeometry();
     fillGeo.setAttribute('position', new THREE.Float32BufferAttribute([
-      -w, 0, bot,   w, 0, bot,   w, 0, top,
-      -w, 0, bot,   w, 0, top,  -w, 0, top,
+      -w, p, bot,   w, p, bot,   w, p, top,
+      -w, p, bot,   w, p, top,  -w, p, top,
     ], 3));
     const fill = new THREE.Mesh(fillGeo, new THREE.MeshBasicMaterial({
       color: 0x4488ff, opacity: 0.1, transparent: true, side: THREE.DoubleSide,
@@ -87,7 +88,7 @@
     const pts = [];
     for (let i = 0; i <= 64; i++) {
       const a = (i / 64) * Math.PI * 2;
-      pts.push(new THREE.Vector3(crossing.x + r * Math.cos(a), 0, crossing.z + r * Math.sin(a)));
+      pts.push(new THREE.Vector3(crossing.x + r * Math.cos(a), crossing.y, crossing.z + r * Math.sin(a)));
     }
     const circle = new THREE.Line(
       new THREE.BufferGeometry().setFromPoints(pts),
@@ -126,7 +127,7 @@
   }
 
   // Build scene objects, collecting references for the legend
-  const strikeZoneObjects = buildStrikeZone(data.strikeZone);
+  const strikeZoneObjects = buildStrikeZone(data.strikeZone, data.plateY);
   const trajectoryLines   = data.trajectories.map(traj => buildTrajectoryLine(traj));
   const crossingCircles   = data.crossings.map(c => buildCrossingCircle(c, data.baseballRadius));
   const balls = data.trajectories.map(traj => {

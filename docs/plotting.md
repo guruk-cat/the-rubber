@@ -30,3 +30,7 @@
 **Plasma colormap:** five control points sampled from matplotlib's Plasma at `t = 0, 0.25, 0.5, 0.75, 1.0` are hardcoded in JS and linearly interpolated, removing any matplotlib dependency from the browser.
 
 **Scene background** is set via `scene.background` in Three.js. The `<body>` CSS has no background color because the canvas fills the full viewport.
+
+## Conventions
+
+Following the new Statcast conventions which came with ABS in the 2026 season, the strike zone is defined at the middle of the home plate. The home plate is 17 inches deep; thus, the strike zone is defined at `y` = 8.5 inches.

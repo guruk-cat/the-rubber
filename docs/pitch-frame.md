@@ -10,7 +10,7 @@ A separate concern — estimating the release point from pitcher geometry — sh
 
 The world frame (or world coordinates) follow Statcast conventions:
 
-* Origin at home plate.
+* Origin at home plate (the back point).
 * `+x` points to the right side of the catcher/ump (= left side of the pitcher).
 * `+y` towards pitcher (i.e., pitcher throws towards `-y`).
 * `+z` points to the sky.

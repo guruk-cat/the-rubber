@@ -27,6 +27,8 @@ k_init = Q_(1e-2, 'kg * s / m')         # arbitrary initial value for constant K
 lr_init = abs(si_mag(k_init)) / 4       # initial learning rate (dimensionless)
 squared_err_goal = 0.01                 # target for squared error (dimensionless)
 
+y_plate = Q_(8.5, "inch")
+
 
 
 def terminate_sim(record):
