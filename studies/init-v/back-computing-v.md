@@ -2,7 +2,7 @@
 
 ## Coordinates
 
-In this document, unless otherwise noted, we use the *world frame*, which follows Statcast conventions for coordinate system:
+In this document, unless otherwise noted, we use the *world frame*, which follows Statcast convention for the coordinate system:
 
 * Origin at home plate (the back point).
 * `+x` points to the right side of the catcher/ump (= left side of the pitcher).
@@ -13,9 +13,9 @@ In this document, unless otherwise noted, we use the *world frame*, which follow
 
 The pitcher's rubber is 60 ft 6 in away from the origin, and 10 inches high. Because of the pitcher's extension (stride + arm lean), the `y` component of the release position typically ranges 53 ~ 55 feet. However, Statcast begins to track the velocity of the ball at `y` = 50 ft, and thus we lose 3 ~ 5 feet of data.
 
-Right now, the configuration simply uses Statcast's 50-feet velocity vector as the initial velocity. This requires an assumption that this is a reasonably approximation. We can use `point_run()` from `Simulation` to test this idea.
+The configuration could simply use Statcast's 50-feet velocity vector as the initial velocity. This requires an assumption that this is a reasonably approximation. Below, we test this assumption.
 
-## Analytic Testing
+## Kinematics 
 
 The following test uses a real pitch tracked by Statcast: a changeup (#100 in the game) thrown by Landen Roupp, on 2026-04-26. The pseudo-initial velocity and spin vectors, at the earliest Statcast tracking point, are:
 
@@ -52,7 +52,7 @@ $$t = \frac{-B + \sqrt{B^2 - 4AC}}{2A} \approx \frac{-38.487 + \sqrt{1501.08}}{7
 Over this interval, the change in velocity is $\Delta\vec{v} = \vec{a}\,t$:
 
 | Component | $\Delta v$ (m/s) |
-|-----------|-----------------|
+| --------- | --------------- |
 | $x$       | $-0.151$        |
 | $y$       | $+0.257$        |
 | $z$       | $-0.287$        |
@@ -61,3 +61,20 @@ Over this interval, the change in velocity is $\Delta\vec{v} = \vec{a}\,t$:
 The initial speed is $|\vec{v_0}| \approx 38.53$ m/s, so the velocity change over the untracked 4.15 ft is roughly 1.1%. This seems like a small number, but we need to know how much this error *compounds* throughout the whole flight of the baseball.
 
 ## Computing the Compound Error
+
+We prepare two config files that are otherwise identical, but one uses the pseudo-initial velocity and the other uses a back-computed initial velocity, from the $\Delta v$ calculated above. You can find these in `init-v-tests\`. 
+
+Now, we run simulations with those two configs. At the end of the simulations, we take their `x` and `z` positions when they are crossing the strike zone, and calculate the error. `test_compound_error.py` was prepared for this purpose. The terminal output is as follows:
+
+```
+Adjusted trajectory crossed plate at    (x, z) = (-8.4171, 9.5696) inches
+Pseudo trajectory crossed plate at      (x, z) = (-6.0540, 14.4960) inches
+
+The difference is (2.3631, 4.9264) inches
+```
+
+That's pretty significant. It's enough to make a strike call a ball, or vice versa.
+
+## Conclusion
+
+The simulation should back-compute the initial velocity from the Statcast tracking's `y` = 50 ft velocity...
