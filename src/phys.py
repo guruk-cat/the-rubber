@@ -15,12 +15,17 @@ xhat = numpy.array([1, 0, 0], dtype=float)
 yhat = numpy.array([0, 1, 0], dtype=float)
 zhat = numpy.array([0, 0, 1], dtype=float)
 
-# pitcher body proportion constants; used when precise values are not provided
+# Pitcher body proportion constants; used when precise values are not provided
 _K_SH           = 0.63    # shoulder height as fraction of pitcher height during delivery (absorbs knee bend + forward lean)
 _K_ARM          = 0.37    # arm length as fraction of pitcher height
 _K_EXT          = 0.082   # arm extension (forward lean) as fraction of pitcher height (~15 cm for 182 cm pitcher)
 _K_STRIDE       = 0.85    # shoulder stride toward plate as fraction of pitcher height (back-computed from Statcast avg ~5.75 ft extension)
 _MOUND_HEIGHT_M = 0.254   # standard mound height above field level (10 in)
+
+# Quick-acess defaults
+DEFAULT_TIME_STEP = Q_(0.5, 'ms')
+DEFAULT_MAGNUS_COEFFICIENT = Q_(2.2075e-06, 'kg * s / m')
+DEFAULT_DRAG_COEFFICIENT = Q_(0.0007884037809624002, 'kg/m')
 
 
 
@@ -106,13 +111,13 @@ class Simulation:
     self.config = types.SimpleNamespace()
     self.config.wind_speed                  = Q_(0, 'mph')
     self.config.wind_direction              = Q_(0, 'degree')
-    self.config.drag_coefficient            = Q_(0.0007884037809624002, 'kg/m')
-    self.config.magnus_coefficient          = Q_(2.2075e-06, 'kg * s / m')
+    self.config.drag_coefficient            = DEFAULT_DRAG_COEFFICIENT
+    self.config.magnus_coefficient          = DEFAULT_MAGNUS_COEFFICIENT
     self.config.magnus_model                = 'squared velocity'
     self.config.ball_mass                   = Q_(145, 'g')
     self.config.ball_diameter               = Q_(3, 'in')
     self.config.gravitational_acceleration  = Q_(9.8, 'm/s**2')
-    self.config.time_step                   = Q_(0.5, 'ms')
+    self.config.time_step                   = DEFAULT_TIME_STEP
     self.config.time_step_growth_rate       = Q_(1, '')
     self.config.error_tolerance             = Q_(0.1, 'percent')
     self.config.auto_converge_time_step     = True
@@ -206,9 +211,8 @@ class Simulation:
     state[7:10] = launch_config.get_spin()
 
     dt = self.config.time_step.to('s').magnitude
-    dt = dt/2   # exists to match the precision of adaptive stepping's dt/2
-
-    ds_dt = self.modified_rk4(dt, state)
+    s_half_step = self.rk4(dt/2, state)
+    ds_dt = self.modified_rk4(dt/2, s_half_step)
     dv_dt = ds_dt[4:7]
 
     if print_debug:

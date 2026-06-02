@@ -6,6 +6,7 @@ import pint
 import numpy
 import yaml
 import os
+import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / 'src'))
 from phys import Simulation, Configuration
@@ -30,15 +31,14 @@ def si_mag(quant):
 
 # OPTIMIZER SETUP CONSTANTS
 
-k_init = Q_(1e-4, 'kg * s / m')     # arbitrary initial value for constant K
-lr_init = abs(si_mag(k_init)) / 4   # initial learning rate (dimensionless)
-delta_k_ratio = 0.01                # delta K is 1% of K
+k_unit = 'kg*s/m'
+k_init = Q_(1e-4, k_unit)     # arbitrary initial value for constant K
+delta_k_ratio = 0.01                # delta K is 1% of K; used in error compute
+target_step_fraction = 0.1          # used to calibrate learning rate
 
 estimated_flight_time = si_mag(Q_(0.5, "second"))
 err_goal_displacement = si_mag(Q_(0.5, "inch"))
 err_goal_da = 2 * err_goal_displacement / (estimated_flight_time ** 2)
-
-
 
 
 
@@ -124,6 +124,7 @@ def select_batches():
     return selected
 
 
+
 # MATH STUFF
 
 def squared_err(prediction, reference):
@@ -149,18 +150,24 @@ def run_single(cfg, k):
     launch.configure(cfg['launch'])
     return sim.point_run(launch)
 
-def run_batch_with_progress(cfgs, k, label):
+def run_batch(cfgs, k, label, info=None):
     # Runs run_single for each config with progress updates
+    if info is not None:
+        batch_name = info[0]
+        name_w = info[1]
+
     results = []
     total   = len(cfgs)
     for i, cfg in enumerate(cfgs):
-        if i > 0:
-            delete_lines(1)
-        print(f'  {label}: {i}/{total}')
+        if info is not None:
+            if i > 0:
+                delete_lines(1)
+            print(f'  [{batch_name:<{name_w}}] {label}: {i}/{total}')
         results.append(run_single(cfg, k))
 
-    # Clear the line when done so the caller can print its own output
-    delete_lines(1)
+    if info is not None:
+        # Clear the line when done so the caller can print its own output
+        delete_lines(1)
     return results
 
 def correct_k_from_err(lr, grad):
@@ -168,15 +175,15 @@ def correct_k_from_err(lr, grad):
     # Caller does: k += correct_k_from_err(lr, grad)
     return -lr * grad
 
-def gradient_step(cfgs, true_acc, k, lr):
+def gradient_step(cfgs, true_acc, k, lr, info):
     # Run one gradient descent step over a batch.
     # Returns updated k (float, SI) and the RMS error before the update.
     delta_k = k * delta_k_ratio
     k_q = Q_(k,           'kg * s / m')
     k_delta_q = Q_(k + delta_k, 'kg * s / m')
 
-    pred_k = run_batch_with_progress(cfgs, k_q,       'K')
-    pred_k_delta = run_batch_with_progress(cfgs, k_delta_q, 'K+δ')
+    pred_k = run_batch(cfgs, k_q, 'K', info=info)
+    pred_k_delta = run_batch(cfgs, k_delta_q, 'K+δ',info=info)
 
     pred_k_arr = numpy.array(pred_k)
     pred_k_delta_arr = numpy.array(pred_k_delta)
@@ -185,13 +192,40 @@ def gradient_step(cfgs, true_acc, k, lr):
     errs_k_delta = squared_err(pred_k_delta_arr, true_acc)
 
     grad = de_dk(errs_k, errs_k_delta, delta_k)
-    k += correct_k_from_err(lr, grad)
+    dk = correct_k_from_err(lr, grad)
+    k += dk
     rms_err = numpy.sqrt(numpy.mean(errs_k))
-    return k, rms_err
+    mean_dk = numpy.mean(dk)
+
+    return k, rms_err, mean_dk
+
+def calibrate_learning_rate(batches, k, redo=False):
+    # Run one batch at K and K+δ to measure the gradient scale, then set lr
+    # so the first step moves K by target_step_fraction of its initial value.
+    _, cfgs, true_acc = batches[0]
+    delta_k   = k * delta_k_ratio
+    k_q       = Q_(k,           'kg * s / m')
+    k_delta_q = Q_(k + delta_k, 'kg * s / m')
+
+    if redo:
+        print("  Re-calibrating learning rate...")
+    else:
+        print("\nCalibrating learning rate...")
+    pred_k       = run_batch(cfgs, k_q, 'K')
+    pred_k_delta = run_batch(cfgs, k_delta_q, 'K+δ')
+
+    errs_k       = squared_err(numpy.array(pred_k), true_acc)
+    errs_k_delta = squared_err(numpy.array(pred_k_delta), true_acc)
+
+    grad = de_dk(errs_k, errs_k_delta, delta_k)
+    lr   = target_step_fraction * abs(k) / abs(grad)
+    print(f"  Calibrated: grad={grad:.4e}  lr={lr:.4e}")
+    time.sleep(1)
+    return lr
 
 def main():
     parser = argparse.ArgumentParser(description='Optimize magnus coefficient K via gradient descent.')
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=50,
                         help='Number of full passes over all selected batches (default: 10).')
     args = parser.parse_args()
 
@@ -204,21 +238,39 @@ def main():
         true_acc = extract_true_acc(cfgs)
         batches.append((d.name, cfgs, true_acc))
         print(f"  {d.name}: {len(cfgs)} pitches loaded.")
+    time.sleep(1)
 
     k  = si_mag(k_init)
-    lr = lr_init
-    converged = False
+    lr = calibrate_learning_rate(batches, k)
+    recalibrate_at = 5
+    batch_count = len(batches)
+    name_w = max(len(name) for name, _, _ in batches)
 
+    converged = False
     for epoch in range(1, args.epochs + 1):
         print(f"\n--- Epoch {epoch}/{args.epochs} ---")
-
+        '''
+        if epoch % recalibrate_at == 0:
+            lr = calibrate_learning_rate(batches, k, redo=True)
+        '''
+        rms_sum = 0
+        dk_sum = 0
         for batch_name, cfgs, true_acc in batches:
-            k, rms_err = gradient_step(cfgs, true_acc, k, lr)
-            print(f"  [{batch_name}]  K={k:.4e}  RMS={rms_err:.4f} m/s²")
+            k, rms_err, dk = gradient_step(cfgs, true_acc, k, lr, (batch_name, name_w))
+            # print(f"  [{batch_name:<{name_w}}]  K={k:.4e} ({k_unit})  RMS={rms_err:.4f} (m/s²)  Mean dK={dk:.4e} ({k_unit})")
+            rms_sum += rms_err
+            dk_sum += dk
 
             if rms_err <= err_goal_da:
                 converged = True
                 break
+        
+        mean_rms = rms_sum / batch_count
+
+        print("")
+        # print(f"  Mean dK across all batches        : {mean_dk:.4e} ({k_unit})")
+        print(f"  K after epoch     : {k:.4e} ({k_unit})")
+        print(f"  Mean RMS error    : {mean_rms:.4f} (m/s²)")
 
         if converged:
             print(f"\nConverged at epoch {epoch}.")
