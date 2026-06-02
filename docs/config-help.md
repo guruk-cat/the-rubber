@@ -87,7 +87,7 @@ All keys are optional. Omitted keys keep their defaults.
 | `ball_mass` | `145 g` | |
 | `ball_diameter` | `3 in` | Not currently used in force calculations; reserved. |
 | `gravitational_acceleration` | `9.8 m/s²` | |
-| `time_step` | `1 ms` | Initial RK4 integration step size. |
+| `time_step` | `0.5 ms` | Initial RK4 integration step size. The simulation actually uses `time_step / 2` and completes two iterations of compute per time step, due to adaptive stepping. |
 | `time_step_growth_rate` | `1` (dimensionless) | Multiplicative factor applied to `time_step` after each step. Values > 1 coarsen the step over time. |
 | `error_tolerance` | `1 percent` | Relative error threshold for adaptive step size. If the error between a full step and two half-steps exceeds this, the step is halved. |
 | `auto_converge_time_step` | `true` | Whether to apply adaptive step-size halving at all. |
@@ -100,13 +100,15 @@ Optional block written by `statcast_to_config.py --training` or the `command.py`
 
 | Key | Type | Description |
 |---|---|---|
-| `plate_x` | quantity (length) | Horizontal position at home plate. Positive = catcher's right (from catcher's perspective). |
-| `plate_z` | quantity (length) | Height above ground at home plate. |
+| `ax` | quantity (acceleration) | Instantaneous acceleration in x at the y=50ft tracking start position. |
+| `ay` | quantity (acceleration) | Instantaneous acceleration in y at the y=50ft tracking start position. |
+| `az` | quantity (acceleration) | Instantaneous acceleration in z at the y=50ft tracking start position. |
 
 ```yaml
 training:
-  plate_x: "0.531479 ft"
-  plate_z: "1.978534 ft"
+  ax: "-5.123456 ft/s**2"
+  ay: "-23.456789 ft/s**2"
+  az: "-15.678901 ft/s**2"
 ```
 
 Not read by `launch.py` or `Simulation` — ignored outside the optimizer.

@@ -1,5 +1,4 @@
-import argparse
-import glob
+import json
 import pathlib
 import sys
 import os
@@ -12,7 +11,19 @@ from statcast_to_config import fetch_pitches, pitch_to_config, print_pitch_list
 
 
 # Run with options
+
 include_training_data = False
+
+SETTINGS_PATH = pathlib.Path(__file__).parent / "command_settings.json"
+
+def load_settings():
+    global include_training_data
+    if SETTINGS_PATH.exists():
+        s = json.loads(SETTINGS_PATH.read_text())
+        include_training_data = s.get("include_training_data", False)
+
+def save_settings():
+    SETTINGS_PATH.write_text(json.dumps({"include_training_data": include_training_data}))
 
 
 # CLI helpers
@@ -92,7 +103,7 @@ class Menu:
             p(f"\n{self.title.upper()}\n")
 
         for i, (label, _) in enumerate(self.items, 1):
-            p(f"  {i}. {label}")
+            p(f"  {i}. {label() if callable(label) else label}")
         if not self.suppress_back_key:
             p(f"\n  0. Back")
         
@@ -235,18 +246,15 @@ def search_statcast(inject=None, fetch_only=False):
 def fetch_and_go():
     search_statcast(fetch_only=True)
 
-
-
-def confirm_output_training_data():
+def toggle_training_data():
     global include_training_data
-    clear_cli()
-    include_training_data = yes_or_no("\nInclude training data in the file output?")
+    include_training_data = not include_training_data
+    save_settings()
+    options.run_menu()
 
 options = Menu("Options",[
-    ("Include training data in the file output", confirm_output_training_data)
+    (lambda: f"Include training data in output  [{'ON' if include_training_data else 'OFF'}]", toggle_training_data)
 ])
-
-    
 
 statcast_menu = Menu("Start with data from Statcast", [
     ("Search and select", search_statcast),
@@ -258,6 +266,7 @@ statcast_menu = Menu("Start with data from Statcast", [
 
 
 def main():
+    load_settings()
     while True:
         statcast_menu.run_menu()
 

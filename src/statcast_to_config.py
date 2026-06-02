@@ -118,11 +118,13 @@ def _require(row, col, label):
 
 
 def _build_training(row):
-    px = float(_require(row, 'plate_x', 'plate position x'))
-    pz = float(_require(row, 'plate_z', 'plate position z'))
+    ax = float(_require(row, 'ax', 'acceleration x'))
+    ay = float(_require(row, 'ay', 'acceleration y'))
+    az = float(_require(row, 'az', 'acceleration z'))
     return {
-        'plate_x': f"{px:.6f} ft",
-        'plate_z': f"{pz:.6f} ft",
+        'ax': f"{ax:.6f} ft/s**2",
+        'ay': f"{ay:.6f} ft/s**2",
+        'az': f"{az:.6f} ft/s**2",
     }
 
 
