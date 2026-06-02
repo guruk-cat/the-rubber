@@ -55,7 +55,7 @@ training:
 
 Not read by `launch.py` or `Simulation` — ignored outside the optimizer.
 
-### 2.3 Proposed changes (in progress)
+### 2.3 Changes (implemted as of 2026-06-02)
 
 The gradient descent approach remains the same. What changes, however, is the vector that is used as the "correct answer" to compare the simulation against.
 

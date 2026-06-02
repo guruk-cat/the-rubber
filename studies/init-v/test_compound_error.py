@@ -6,7 +6,7 @@ import numpy
 import os
 import pint
 
-sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent / 'src'))
+sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent / 'main'))
 
 from phys import Simulation, Configuration
 from plotting import Trajectory3DPlot
