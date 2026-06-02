@@ -15,13 +15,16 @@ xhat = numpy.array([1, 0, 0], dtype=float)
 yhat = numpy.array([0, 1, 0], dtype=float)
 zhat = numpy.array([0, 0, 1], dtype=float)
 
-# pitcher body proportion constants (used when precise values are not provided)
+# pitcher body proportion constants; used when precise values are not provided
 _K_SH           = 0.63    # shoulder height as fraction of pitcher height during delivery (absorbs knee bend + forward lean)
 _K_ARM          = 0.37    # arm length as fraction of pitcher height
 _K_EXT          = 0.082   # arm extension (forward lean) as fraction of pitcher height (~15 cm for 182 cm pitcher)
 _K_STRIDE       = 0.85    # shoulder stride toward plate as fraction of pitcher height (back-computed from Statcast avg ~5.75 ft extension)
 _MOUND_HEIGHT_M = 0.254   # standard mound height above field level (10 in)
 
+
+
+# Helper functions
 
 def rot_x(theta):
   t = theta.to('radian').magnitude
@@ -65,6 +68,10 @@ def _parse_quantity(s):
     return Q_(float(m.group(1)) * 12 + float(m.group(2)), 'in')
   return Q_(s)
 
+
+
+# Frame builders
+
 def arm_direction(arm_slot_rad, handedness, arm_extension_m=0.0, arm_length_m=1.0):
   # Unit vector from shoulder to hand at release, in world coordinates.
   # Righty arm is on world -x side (pitcher's right); lefty on +x.
@@ -91,6 +98,7 @@ def build_pitch_frame(release_world, arm_dir):
   x_pitch = cross / norm(cross)
   z_pitch = numpy.cross(x_pitch, y_pitch)
   return numpy.column_stack([x_pitch, y_pitch, z_pitch])
+
 
 
 class Simulation:
@@ -170,11 +178,49 @@ class Simulation:
     k3 = time_step * self.derivative(state + k2 / 2)
     k4 = time_step * self.derivative(state + k3)
     return state + (k1 + 2*k2 + 2*k3 + k4) / 6
+  
+  def modified_rk4(self, time_step, state):
+    d1 = self.derivative(state)
+    k1 = time_step * d1
+
+    d2 = self.derivative(state + k1 / 2)
+    k2 = time_step * d2
+
+    d3 = self.derivative(state + k2/2)
+    k3 = time_step * d3
+
+    d4 = self.derivative(state +k3)
+
+    return (d1 + 2*d2 + 2*d3 + d4) / 6
 
   def _step_error(self, s0, s1, s2):
     # relative error: how much the double-half-step s2 differs from the full-step s1,
     # normalised by the total displacement from s0
     return norm(s2 - s1) / norm(s2 - s0)
+  
+  def point_run(self, launch_config, print_debug=False):
+    # used for constant optimization
+    # compute derivative of velo vector for one time step and return vector
+    state = numpy.zeros(self.state_size)
+    state[4:7]  = launch_config.get_velocity()
+    state[7:10] = launch_config.get_spin()
+
+    dt = self.config.time_step.to('s').magnitude
+    dt = dt/2   # exists to match the precision of adaptive stepping's dt/2
+
+    ds_dt = self.modified_rk4(dt, state)
+    dv_dt = ds_dt[4:7]
+
+    if print_debug:
+      print(f"time      : {state[0]}")
+      print(f"init pos  : [{', '.join(str(v) for v in state[1:4])}]")
+      print(f"init velo : [{', '.join(str(v) for v in state[4:7])}]")
+      print(f"init spin : [{', '.join(str(v) for v in state[7:10])}]\n")
+
+      print(f"dt        : {dt}")
+      print(f"dv_dt     : [{', '.join(str(v) for v in dv_dt)}]")
+
+    return dv_dt
 
   def run(self, launch_config, terminate_function=lambda record: len(record) > 1000, record_all=True, adaptive=True):
     state = numpy.zeros(self.state_size)
