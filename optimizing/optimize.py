@@ -8,7 +8,7 @@ import yaml
 import os
 import time
 
-sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / 'main'))
 from phys import Simulation, Configuration
 
 

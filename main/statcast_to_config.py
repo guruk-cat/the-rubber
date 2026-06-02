@@ -164,12 +164,9 @@ def _build_config(row, height, arm_slot_override, include_training=False):
     statcast_axis = float(_require(row, 'spin_axis', 'spin axis'))
     clock_angle = _clock_angle_from_statcast(statcast_axis, arm_slot_float, handedness_num)
 
-    '''
-    Velocity direction from Statcast's vx0/vy0/vz0 
-    (ft/s at the y=50ft tracking-start position, ~5 ft closer to the plate than release). 
-    Direction is a small approximation.
-    Magnitude is overridden by release_speed so the speed at release is exact.
-    '''
+    # Statcast vx0/vy0/vz0 are in ft/s at the y=50ft tracking-start position (~3–5 ft
+    # closer to the plate than the release point). Configuration.velo_correction() will
+    # back-compute the true release velocity; statcast: true triggers that logic.
     vx = float(_require(row, 'vx0', 'velocity x'))
     vy = float(_require(row, 'vy0', 'velocity y'))
     vz = float(_require(row, 'vz0', 'velocity z'))
@@ -190,6 +187,7 @@ def _build_config(row, height, arm_slot_override, include_training=False):
             'clock_angle': f"{clock_angle:.4f} degree",
             'velocity': {
                 'vector': [f"{vx} ft/s", f"{vy} ft/s", f"{vz} ft/s"],
+                'statcast': True,
             },
         }
     }

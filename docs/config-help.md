@@ -51,6 +51,16 @@ velocity:
   vector: ["-1 m/s", "-43 m/s", "1.5 m/s"]   # world-frame [vx, vy, vz]
 ```
 
+Add `statcast: true` when the vector comes from Statcast `vx0/vy0/vz0` (recorded at y=50 ft, not at the release point). `Configuration.velo_correction()` will back-compute the true release velocity over the untracked gap before applying it.
+
+```yaml
+velocity:
+  vector: ["-3.45 ft/s", "-141.2 ft/s", "-2.1 ft/s"]
+  statcast: true
+```
+
+`statcast_to_config.py` sets this flag automatically. Manual configs that use a directly-measured release velocity should leave it out (or set it to `false`).
+
 **Option B (aim initial velo at a world-frame point):**
 
 ```yaml

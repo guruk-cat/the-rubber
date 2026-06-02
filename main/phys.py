@@ -281,9 +281,10 @@ class Configuration:
     self.rubber        = numpy.array([0.0, 18.44])  # [x_m, y_m]
 
     # Velocity parameters
-    self.speed           = None            # Q_ scalar; if None, derived from velocity_vector norm
-    self.aim_target      = None            # ndarray (world metres); mutually exclusive with velocity_vector
-    self.velocity_vector = None            # Q_ vector; mutually exclusive with aim_target
+    self.speed                = None       # Q_ scalar; if None, derived from velocity_vector norm
+    self.aim_target           = None       # ndarray (world metres); mutually exclusive with velocity_vector
+    self.velocity_vector      = None       # Q_ vector; mutually exclusive with aim_target
+    self.velocity_is_statcast = False      # if True, velocity_vector is at y=50ft and needs back-computation
 
     # Spin parameters
     self.spin        = Q_(0, 'rad/s')
@@ -324,6 +325,8 @@ class Configuration:
     if 'velocity' in config:
       vel = config['velocity']
       config_keys_used.append('velocity')
+      if 'statcast' in vel:
+        self.velocity_is_statcast = bool(vel['statcast'])
       if 'target' in vel:
         t = vel['target']
         self.aim_target      = numpy.array([_parse_quantity(v).to('m').magnitude for v in t])
@@ -384,21 +387,64 @@ class Configuration:
     release_world, _, _ = self._resolve_geometry()
     return Q_(release_world, 'm').to(unit).magnitude
 
+  def velo_correction(self, v50_ms):
+    '''
+    Back-compute the ball's release velocity from its Statcast-tracked velocity at y=50 ft.
+
+    Args:
+      v50_ms: velocity vector at y=50 ft, in m/s (numpy array, world frame).
+    Returns:
+      v_release: velocity vector at the release point, in m/s (numpy array, world frame).
+    '''
+    w     = self.get_spin()
+    speed = norm(v50_ms)
+
+    Cd = si_mag(DEFAULT_DRAG_COEFFICIENT)
+    Cm = si_mag(DEFAULT_MAGNUS_COEFFICIENT)
+    m  = si_mag(Q_(145, 'g'))
+
+    a = numpy.zeros(3)
+    a -= 9.8 * zhat
+    a -= (Cd / m) * speed * v50_ms
+    a += (Cm / m) * speed * numpy.cross(w, v50_ms)
+
+    release_world, _, _ = self._resolve_geometry()
+    s_y = Q_(50, 'ft').to('m').magnitude - release_world[1]
+
+    # Solve 0.5*a_y*t^2 - v50_y*t + s_y = 0 for t > 0
+    A   = 0.5 * a[1]
+    B   = -v50_ms[1]
+    C   = s_y
+    disc = B**2 - 4*A*C
+    if disc < 0:
+      raise ValueError("velo_correction: no real solution — check release point and velocity vector.")
+    t = (-B + numpy.sqrt(disc)) / (2 * A)
+
+    return v50_ms - a * t
+
   def get_velocity(self, unit=(ureg.meter/ureg.second)):
     release_world, _, _ = self._resolve_geometry()
+
+    v_release_ms = None  # set when velo_correction is applied
 
     if self.aim_target is not None:
       dr        = self.aim_target - release_world
       direction = dr / norm(dr)
     elif self.velocity_vector is not None:
-      vv_ms     = self.velocity_vector.to('m/s').magnitude if isinstance(self.velocity_vector, Q_) \
-                  else numpy.asarray(self.velocity_vector, dtype=float)
-      direction = vv_ms / norm(vv_ms)
+      vv_ms = self.velocity_vector.to('m/s').magnitude if isinstance(self.velocity_vector, Q_) \
+              else numpy.asarray(self.velocity_vector, dtype=float)
+      if self.velocity_is_statcast:
+        v_release_ms = self.velo_correction(vv_ms)
+        direction    = v_release_ms / norm(v_release_ms)
+      else:
+        direction = vv_ms / norm(vv_ms)
     else:
       raise ValueError("Cannot resolve velocity direction: provide 'velocity.target' or 'velocity.vector'.")
 
     if self.speed is not None:
       magnitude = float(self.speed.to(unit).magnitude)
+    elif v_release_ms is not None:
+      magnitude = float(Q_(norm(v_release_ms), 'm/s').to(unit).magnitude)
     elif self.velocity_vector is not None:
       vv        = self.velocity_vector
       vv_u      = vv.to(unit).magnitude if isinstance(vv, Q_) else numpy.asarray(vv, dtype=float)

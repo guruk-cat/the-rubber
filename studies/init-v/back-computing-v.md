@@ -78,3 +78,7 @@ That's pretty significant. It's enough to make a strike call a ball, or vice ver
 ## Conclusion
 
 The simulation should back-compute the initial velocity from the Statcast tracking's `y` = 50 ft velocity...
+
+But there's another issue. While the 3D velocity vector is logged at `y` = 50 ft, the *speed* of the ball (commonly referred to simply as "velocity") is reported out-of-hand, that is, at the release point. Hence, it seems that the most robust way to back-compute the initial velocity vector is as follows.
+
+First, we use the raw Statcast `vx0`, `vy0`, and `vz0`, without any meddling such as unit conversions or normalizations, to compute the projected velocity vector at the release point (as described in detail above). Let's call this `init_v_proj`, a three-dimensinoal array. Then, we use this vector to calculate the unit vector of the true initial velocity. We use the `release_speed` key from Statcast tracking to override the magnitude. 
