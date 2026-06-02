@@ -196,7 +196,7 @@ def _build_config(row, height, arm_slot_override, include_training=False):
     return cfg
 
 
-def fetch_pitches(pitcher_name, date, no_verify_ssl=False):
+def fetch_pitches(pitcher_name, date, no_verify_ssl=True):
     # Fetch all pitches for a pitcher on a date. 
     # Returns a chronological DataFrame.
     if no_verify_ssl:
