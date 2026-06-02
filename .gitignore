@@ -1,5 +1,5 @@
 __pycache__/
 .venv/
-notes.txt
+notes.*
 tmp/
 .DS_Store
