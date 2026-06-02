@@ -13,11 +13,11 @@ In this document, unless otherwise noted, we use the *world frame*, which follow
 
 The pitcher's rubber is 60 ft 6 in away from the origin, and 10 inches high. Because of the pitcher's extension (stride + arm lean), the `y` component of the release position typically ranges 53 ~ 55 feet. However, Statcast begins to track the velocity of the ball at `y` = 50 ft, and thus we lose 3 ~ 5 feet of data.
 
-The configuration could simply use Statcast's 50-feet velocity vector as the initial velocity. This requires an assumption that this is a reasonably approximation. Below, we test this assumption.
+The configuration could simply use Statcast's 50-feet velocity vector as the initial velocity. This requires an assumption that this is a reasonable approximation. Below, we test this assumption.
 
 ## Kinematics 
 
-The following test uses a real pitch tracked by Statcast: a changeup (#100 in the game) thrown by Landen Roupp, on 2026-04-26. The pseudo-initial velocity and spin vectors, at the earliest Statcast tracking point, are:
+The following test uses a real pitch tracked by Statcast: a changeup thrown by Landen Roupp, on 2026-04-26 (pitch count # 100). First, we load the config into the simulator and check the pseudo-initial velocity and spin vectors (which would've been recorded at the earliest Statcast tracking point). They are:
 
 ```
 init velo: [1.7559473536712067, -38.486628117326106, -0.7941129849602245]
@@ -64,7 +64,7 @@ The initial speed is $|\vec{v_0}| \approx 38.53$ m/s, so the velocity change ove
 
 We prepare two config files that are otherwise identical, but one uses the pseudo-initial velocity and the other uses a back-computed initial velocity, from the $\Delta v$ calculated above. You can find these in `init-v-tests\`. 
 
-Now, we run simulations with those two configs. At the end of the simulations, we take their `x` and `z` positions when they are crossing the strike zone, and calculate the error. `test_compound_error.py` was prepared for this purpose. The terminal output is as follows:
+Now, we run simulations with those two configs. At the end of the simulations, we take their `x` and `z` positions when they cross the strike zone, and calculate the error. `test_compound_error.py` was prepared for this purpose. The terminal output is as follows:
 
 ```
 Adjusted trajectory crossed plate at    (x, z) = (-8.4171, 9.5696) inches
