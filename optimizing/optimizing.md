@@ -40,7 +40,7 @@ The gradient descent approach as described above remains the same. What changes 
 
 We can thus acquire a set of $s_0$, $s_1$, and $s_2$ without running the simulator for the entire trajectory of the baseball. The simulator simply needs to calculate the acceleration $\vec{a}$ from a velocity $\vec{v}$ at time $t$, which it already does internally at every time step. The initial velocity vector tracked at `y` = 50 feet in Statcast becomes the velocity in $s_0$, the rest of the state vector being configured accordingly to the Statcast sample; the intial acceleration vector as explained above is the "correct" reference point; and the time derivative of velocity at $s_0$, as computed in the simulator, become the "prediction" that is compared for error calculation.
 
-The `Simulator` class in the `phys` module gains a new `def point_run()` for this purpose. It uses the same precision as `run()`, but returns $dv/dt$ for the state vector that is passed onto it.
+The `Simulator` class in the `phys` module gains a new `def point_run()` for this purpose. It uses the same computing method as `run()`, but iterates over only one time step (or two half-steps) and returns $dv/dt$ for the state vector that is passed onto it
 
 The yaml files (used to set up a `Configuration` instance) have an optional block `training` for this purpose. It can be written either by `statcast_to_config.py --training` or the `command.py` CLI tool when the appropriate option is selected. The block, when used, includes the `ax/ay/az` values. It is not read by `Simulation` and is ignored outside the optimizer. 
 
