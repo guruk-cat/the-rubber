@@ -14,9 +14,7 @@ Air drag is proportional to the magnitude of velocity squared, and is in the opp
 
 The two constants in the equation, $\alpha$ and $\beta$, have to be empirically determined. The `optimize.py` code exists for this purpose. In the code, the letter *k* is used to denote an unknown constant. In this document, we will assume that $\beta$ is unknown, and will refer to it as the "Magnus term coefficient" or "constant $K$. 
 
-## 2. Methods
-
-### 2.1. Overview
+## 2. Concept
 
 The optimizer performs a **gradient descent** on a function $f$ of state vector $s$ and constant $k$. Its operation in simple terms is as follows.
 
@@ -36,34 +34,14 @@ $$  \frac{dE}{dK}  \approx \frac{E(K) - E(K + \delta)}{\delta} $$
 
 We can then mutliply a "learning rate" to this result, and adjust $K$ by that amount; and repeat until error converges to near-zero.
 
-The `optimizer\optimize.py` script does this. It loads a batch of samples and does the error calculation above (mean squared error used, and then converted to RMS for evaluation). It takes the initial state vector as calculated by the config logic (this remains untouched), runs the simulator, and compares the simulator's `x-z` position when crossing the plate with that recorded by Statcast.
+## 3. Implementation
 
-### 2.2 Configs
-
-The yaml files that are used as configuration starting points for each pitch has an optional block `training` for this purpose. It is written either by `statcast_to_config.py --training` or the `command.py` CLI tool when the appropriate option is selected. It stores the ground-truth plate crossing position from Statcast, used by the optimizer as the target output (s₂) for a pitch.
-
-| Key | Type | Description |
-|---|---|---|
-| `plate_x` | quantity (length) | Horizontal position at home plate. Positive = catcher's right (from catcher's perspective). |
-| `plate_z` | quantity (length) | Height above ground at home plate. |
-
-```yaml
-training:
-  plate_x: "0.531479 ft"
-  plate_z: "1.978534 ft"
-```
-
-Not read by `launch.py` or `Simulation` — ignored outside the optimizer.
-
-### 2.3 Changes (implemted as of 2026-06-02)
-
-The gradient descent approach remains the same. What changes, however, is the vector that is used as the "correct answer" to compare the simulation against.
-
-The following are some keys in public Statcast data that are dropped by our configuration streams:
-
-* `ax`, `ay`, `az`: instantaneous acceleration (ft/s^2) at the `y` = 50ft tracking start position. This position also happens to be where the "initial" velocity vector is tracked and used, although actual release positions typically have a `y` value that ranges 52-55 ft; an unavoidable but acceptable approximation.
-* `pfx_x`, `pfx_z`: integrated horizontal/vertical movement (i.e., Magnus force + air drag; gravity removed).
+The gradient descent approach as described above remains the same. What changes in the code, however, is the vector that is used as the "correct answer" to compare the simulation against. Statcast tracks `ax`, `ay`, `az`: instantaneous acceleration (ft/s^2) at the `y` = 50ft tracking start position. This position also happens to be where the "initial" velocity vector is tracked, although actual release positions typically have a `y` value that ranges 52-55 ft.
 
 We can thus acquire a set of $s_0$, $s_1$, and $s_2$ without running the simulator for the entire trajectory of the baseball. The simulator simply needs to calculate the acceleration $\vec{a}$ from a velocity $\vec{v}$ at time $t$, which it already does internally at every time step. The initial velocity vector tracked at `y` = 50 feet in Statcast becomes the velocity in $s_0$, the rest of the state vector being configured accordingly to the Statcast sample; the intial acceleration vector as explained above is the "correct" reference point; and the time derivative of velocity at $s_0$, as computed in the simulator, become the "prediction" that is compared for error calculation.
 
 The `Simulator` class in the `phys` module gains a new `def point_run()` for this purpose. It uses the same precision as `run()`, but returns $dv/dt$ for the state vector that is passed onto it.
+
+The yaml files (used to set up a `Configuration` instance) have an optional block `training` for this purpose. It can be written either by `statcast_to_config.py --training` or the `command.py` CLI tool when the appropriate option is selected. The block, when used, includes the `ax/ay/az` values. It is not read by `Simulation` and is ignored outside the optimizer. 
+
+See `optimize.py` for the code.
