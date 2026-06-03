@@ -1,5 +1,6 @@
 import argparse
 import glob
+import numpy
 import pathlib
 import sys
 import yaml
@@ -8,6 +9,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 
 from phys import Simulation, Configuration
 from plotting import Trajectory3DPlot
+
+PLATE_Y = 0.2159  # middle of plate (8.5 inches from back tip); Statcast 2026+
 
 def terminate(record):
     state = record[-1]
@@ -18,6 +21,11 @@ def terminate(record):
     if state[0] > 10:   # t > 10s: safety valve
         return True
     return False
+
+def crossing_point(traj):
+    y = traj[:, 2]
+    i = numpy.argmin(numpy.abs(y - PLATE_Y))
+    return i
 
 def main():
     parser = argparse.ArgumentParser(description='Baseball pitch simulator')
@@ -47,9 +55,10 @@ def main():
         trajectories.append(trajectory)
 
         name = pathlib.Path(config_path).name
-        print(f"[{name}] {len(trajectory)} steps, "
-              f"final t={trajectory[-1][0]:.3f}s, "
-              f"final pos=({trajectory[-1][1]:.2f}, {trajectory[-1][2]:.2f}, {trajectory[-1][3]:.2f}) m")
+        plate_i = crossing_point(numpy.array(trajectory))
+        print(f"[{name}] {len(trajectory)} steps")
+        print(f"t when crossing plate ={trajectory[plate_i][0]:.3f}s")
+        print(f"pos when crossing plate =({trajectory[plate_i][1]:.2f}, {trajectory[plate_i][2]:.2f}, {trajectory[plate_i][3]:.2f}) m\n")
 
     if args.plot:
         labels = [pathlib.Path(p).stem for p in config_paths]
