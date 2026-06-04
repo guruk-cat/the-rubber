@@ -4,12 +4,24 @@ import numpy
 import pathlib
 import sys
 import yaml
+import pint
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from phys import Simulation, Configuration
 from plotting import Trajectory3DPlot
 
-PLATE_Y = 0.2159  # middle of plate (8.5 inches from back tip); Statcast 2026+
+ureg = pint.UnitRegistry()
+Q_ = ureg.Quantity  # type: ignore[misc]
+pint.set_application_registry(ureg)
+
+def si_mag(quantity):
+    return quantity.to_base_units().magnitude
+
+# middle of plate; Statcast 2026+
+PLATE_Y = Q_(8.5, "inch")
+
+# new value from optimizer, using linear velocity for magnus force
+NEW_MAGNUS_K = Q_(6.722464088244e-05, "kg * s / m") 
 
 def terminate(record):
     state = record[-1]
@@ -23,7 +35,7 @@ def terminate(record):
 
 def crossing_point(traj):
     y = traj[:, 2]
-    i = numpy.argmin(numpy.abs(y - PLATE_Y))
+    i = numpy.argmin(numpy.abs(y - si_mag(PLATE_Y)))
     return i
 
 def main():
@@ -46,6 +58,7 @@ def main():
         sim = Simulation()
         if 'simulation' in cfg:
             sim.configure(cfg['simulation'])
+        sim.config.magnus_coefficient = NEW_MAGNUS_K
         sim.record_magnus()     # record acceleration from magnus force at every time step
 
         launch = Configuration()

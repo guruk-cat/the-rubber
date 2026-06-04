@@ -113,7 +113,7 @@ class Simulation:
     self.config.wind_direction              = Q_(0, 'degree')
     self.config.drag_coefficient            = DEFAULT_DRAG_COEFFICIENT
     self.config.magnus_coefficient          = DEFAULT_MAGNUS_COEFFICIENT
-    self.config.magnus_model                = 'squared velocity'
+    self.config.magnus_model                = 'linear velocity'
     self.config.ball_mass                   = Q_(145, 'g')
     self.config.ball_diameter               = Q_(3, 'in')
     self.config.gravitational_acceleration  = Q_(9.8, 'm/s**2')

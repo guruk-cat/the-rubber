@@ -34,7 +34,7 @@ def si_mag(quant):
 # OPTIMIZER SETUP CONSTANTS
 
 k_unit = 'kg*s/m'
-k_init = Q_(1e-4, k_unit)       # arbitrary initial value for constant K
+k_init = Q_(1.0e-3, k_unit)       # arbitrary initial value for constant K
 delta_k_ratio = 0.01            # delta K is 1% of K; used in error compute
 init_step_fraction = 0.1        # used to calibrate learning rate for first epoch
 
@@ -149,9 +149,8 @@ def run_single(cfg, k):
     # k: magnus_coefficient as a pint Quantity.
     # Returns numpy [ax, ay, az] in m/s².
     sim = Simulation()
-    if 'simulation' in cfg:
-        sim.configure(cfg['simulation'])
     sim.config.magnus_coefficient = k
+    sim.config.magnus_model = 'linear velocity'
     launch = Configuration()
     launch.configure(cfg['launch'])
     return sim.point_run(launch)
