@@ -122,6 +122,10 @@ class Simulation:
     self.config.error_tolerance             = Q_(0.1, 'percent')
     self.config.auto_converge_time_step     = True
 
+    self.extra = types.SimpleNamespace() 
+    self.extra.record         = None    # use this to record miscellaneous data during run()
+    self.extra.record_type    = None    # use def record_* functions to activate
+
   def configure(self, config):
     config_keys_used = []
     for k in self.config.__dict__:
@@ -146,6 +150,24 @@ class Simulation:
         print("  ", k)
       print("Make sure you didn't mispell something.")
 
+
+
+  # Extra recording
+
+  def record_clean(self):
+    self.extra.record_type  = None
+    self.extra.record       = None
+
+  def record_magnus(self):
+    self.extra.record_type  = "magnus"
+    self.extra.record       = [numpy.zeros(3)]
+  
+  def record_compute_time(self):
+    self.extra.record_type = "compute"
+    self.extra.record = 0.0
+
+
+
   @property
   def state_size(self):
     '''
@@ -166,14 +188,26 @@ class Simulation:
 
     # dv/dt = (Fg + Fd + Fm) / m
     dsdt[4:7] -= si_mag(self.config.gravitational_acceleration) * zhat  # gravity
+    
     speed = norm(state[4:7])
-    dsdt[4:7] -= si_mag(self.config.drag_coefficient) * speed * state[4:7] / si_mag(self.config.ball_mass)  # drag
+    drag = (-1) * si_mag(self.config.drag_coefficient) * speed * state[4:7] / si_mag(self.config.ball_mass) 
+    dsdt[4:7] += drag
+
+    magnus = None 
     if self.config.magnus_model == 'squared velocity':
-      dsdt[4:7] += si_mag(self.config.magnus_coefficient) * speed * numpy.cross(state[7:10], state[4:7]) / si_mag(self.config.ball_mass)
+      magnus = si_mag(self.config.magnus_coefficient) * speed * numpy.cross(state[7:10], state[4:7]) / si_mag(self.config.ball_mass)
+      dsdt[4:7] += magnus
     elif self.config.magnus_model == 'linear velocity':
-      dsdt[4:7] += si_mag(self.config.magnus_coefficient) * numpy.cross(state[7:10], state[4:7]) / si_mag(self.config.ball_mass)
+      magnus = si_mag(self.config.magnus_coefficient) * numpy.cross(state[7:10], state[4:7]) / si_mag(self.config.ball_mass)
+      dsdt[4:7] += magnus
     else:
       raise Exception(f"Unrecognized magnus model '{self.config.magnus_model}'")
+    
+    if self.extra.record_type is None:
+      # not really necessary, but in place in case I add more stuff later
+      pass
+    elif self.extra.record_type == "magnus":
+      self.extra.record.append(magnus)
 
     return dsdt
 
