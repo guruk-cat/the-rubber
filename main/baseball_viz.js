@@ -1,3 +1,5 @@
+// TO-DO: fix bugs with infield color overlap
+
 (function () {
   const data = window.__BASEBALL_DATA__;
   const fps = data.fps;
@@ -8,7 +10,7 @@
   // z-up matches simulation coordinates where z is height
   const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 200);
   camera.up.set(0, 0, 1);
-  camera.position.set(0, -8, 3);
+  camera.position.set(0, -2, 0.8);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -16,7 +18,7 @@
   document.body.appendChild(renderer.domElement);
 
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 10, 1.5);
+  controls.target.set(0, 18.44, 1.8);
   controls.update();
 
   // Sampled from matplotlib's Plasma colormap at t = 0, 0.25, 0.5, 0.75, 1.0
@@ -63,7 +65,7 @@
     const fill = new THREE.Mesh(fillGeo, new THREE.MeshBasicMaterial({
       color: 0x4488ff, opacity: 0.1, transparent: true, side: THREE.DoubleSide,
     }));
-    scene.add(fill);
+    //scene.add(fill);
 
     return [outline, fill];
   }
@@ -78,9 +80,10 @@
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     geo.setAttribute('color',    new THREE.Float32BufferAttribute(col, 3));
+    geo.setDrawRange(0, 0);
     const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ vertexColors: true }));
     scene.add(line);
-    return line;
+    return { line, geo };
   }
 
   function buildCrossingCircle(crossing, r) {
@@ -101,8 +104,6 @@
   function buildBall(r) {
     const mat = new THREE.LineBasicMaterial({ color: 0xffffff });
     const group = new THREE.Group();
-
-    // Circles centered at origin; repositioning the group each frame avoids geometry rebuilds
     const circlePoints = (axisFn) => {
       const pts = [];
       for (let i = 0; i <= 64; i++) {
@@ -126,14 +127,77 @@
     return group;
   }
 
+  function buildField(plateY) {
+    const BASE_DIST   = 27.432;   // 90 ft
+    const MOUND_DIST  = 18.4404;  // 60.5 ft
+    const INFIELD_R   = 28.956;   // 95 ft — covers basepaths
+    const OF_RADIUS   = 109.728;  // 360 ft
+    const MOUND_R     = 2.7432;   // 9 ft
+    const PATH_HW     = 0.5334;   // ~21 in, slightly wider than the plate
+    const FOUL_ANGLE  = Math.PI / 4;
+
+    const GRASS_OPACITY = 0.30;
+    const DIRT_OPACITY  = 0.20;
+    const GRASS_COLOR   = 0x1a6b1a;
+    const DIRT_COLOR    = 0x7a4a22;
+
+    const s      = BASE_DIST / Math.SQRT2;  // ~19.41 m
+    const moundY = plateY + MOUND_DIST;
+
+    function filledMesh(shape, color, opacity, zLayer) {
+      const mat = new THREE.MeshBasicMaterial({
+        color, opacity, transparent: true, side: THREE.DoubleSide, depthWrite: false,
+      });
+      const mesh = new THREE.Mesh(new THREE.ShapeGeometry(shape, 64), mat);
+      mesh.renderOrder = zLayer;
+      mesh.position.z = zLayer * 0.001;
+      scene.add(mesh);
+    }
+
+    const N = 64;
+
+    const uI = (s + Math.sqrt(2 * INFIELD_R * INFIELD_R - s * s)) / 2;  // foul-line / circle intersection dist
+    const rightAngle = Math.atan2(uI - s, uI);
+    const leftAngle  = Math.PI - rightAngle;
+
+    const grassShape = new THREE.Shape();
+    grassShape.moveTo(0, plateY);
+    for (let i = 0; i <= N; i++) {
+      const a = -FOUL_ANGLE + (2 * FOUL_ANGLE * i / N);
+      grassShape.lineTo(Math.sin(a) * OF_RADIUS, plateY + Math.cos(a) * OF_RADIUS);
+    }
+    grassShape.closePath();
+
+    const infieldHole = new THREE.Path();
+    infieldHole.moveTo(0, plateY);
+    infieldHole.lineTo(uI, plateY + uI);                                         // right foul line to circle
+    infieldHole.absarc(0, plateY + s, INFIELD_R, rightAngle, leftAngle, false);  // CCW arc over top
+    infieldHole.lineTo(0, plateY);                                                // left foul line back to home
+    grassShape.holes.push(infieldHole);
+    filledMesh(grassShape, GRASS_COLOR, GRASS_OPACITY, 1);
+
+    // Infield dirt circle 
+    const dirtShape = new THREE.Shape();
+    dirtShape.absarc(0, plateY + s, INFIELD_R, 0, Math.PI * 2, false);
+    filledMesh(dirtShape, DIRT_COLOR, DIRT_OPACITY, 2);
+
+    // Pitcher's mound 
+    const moundShape = new THREE.Shape();
+    moundShape.absarc(0, moundY, MOUND_R, 0, Math.PI * 2, false);
+    filledMesh(moundShape, DIRT_COLOR, DIRT_OPACITY, 3);
+  }
+
   // Build scene objects, collecting references for the legend
+  buildField(data.plateY);
   const strikeZoneObjects = buildStrikeZone(data.strikeZone, data.plateY);
-  const trajectoryLines   = data.trajectories.map(traj => buildTrajectoryLine(traj));
+  const trajectoryBuilt = data.trajectories.map(traj => buildTrajectoryLine(traj));
+  const trajectoryLines = trajectoryBuilt.map(d => d.line);
+  const trajectoryGeos  = trajectoryBuilt.map(d => d.geo);
   const crossingCircles   = data.crossings.map(c => buildCrossingCircle(c, data.baseballRadius));
   const balls = data.trajectories.map(traj => {
     const group = buildBall(data.baseballRadius);
-    const last = traj.frames[traj.frames.length - 1];
-    group.position.set(last[0], last[1], last[2]);
+    const first = traj.frames[0];
+    group.position.set(first[0], first[1], first[2]);
     return group;
   });
 
@@ -141,17 +205,67 @@
     const arrow = new THREE.ArrowHelper(
       new THREE.Vector3(0, 1, 0),  // placeholder direction
       new THREE.Vector3(0, 0, 0),  // placeholder origin
-      0.3, 0x00ff88, 0.08, 0.05
+      0.2, 0x00ff88, 0.04, 0.02
     );
     scene.add(arrow);
     return arrow;
   }
-  const magnusArrows = data.trajectories.map(traj =>
-    traj.magnusDirections ? buildMagnusArrow() : null
-  );
+  const magnusArrows = data.trajectories.map(traj => {
+    if (!traj.magnusDirections) return null;
+    const arrow = buildMagnusArrow();
+    arrow.visible = false;
+    return arrow;
+  });
 
   // Legend
-  function buildLegend(items) {
+  // Per-trajectory and global visibility state; effective visibility = traj AND global.
+  const trajVisible = data.trajectories.map(() => true);
+  const globalTracesOn    = { value: true };
+  const globalBallsOn     = { value: true };
+  const globalCrossingsOn = { value: true };
+  const globalMagnusOn    = { value: false };
+
+  function applyTrace(i) {
+    trajectoryLines[i].visible = trajVisible[i] && globalTracesOn.value;
+  }
+  function applyBall(i) {
+    balls[i].visible = trajVisible[i] && globalBallsOn.value;
+  }
+  function applyCrossing(i) {
+    if (crossingCircles[i]) crossingCircles[i].visible = trajVisible[i] && globalCrossingsOn.value;
+  }
+  function applyMagnus(i) {
+    if (magnusArrows[i]) magnusArrows[i].visible = trajVisible[i] && globalMagnusOn.value;
+  }
+
+  function makeToggleRow(label, color, onClick, initialVisible = true) {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;';
+
+    const swatch = document.createElement('div');
+    swatch.style.cssText = `width:10px;height:10px;border-radius:2px;background:${color};flex-shrink:0;`;
+
+    const text = document.createElement('span');
+    text.textContent = label;
+
+    let visible = initialVisible;
+    row.style.opacity = visible ? '1' : '0.35';
+    text.style.textDecoration = visible ? '' : 'line-through';
+    const setVisible = (v) => {
+      if (v === visible) return;
+      visible = v;
+      onClick(visible);
+      row.style.opacity = visible ? '1' : '0.35';
+      text.style.textDecoration = visible ? '' : 'line-through';
+    };
+    row.addEventListener('click', () => setVisible(!visible));
+
+    row.appendChild(swatch);
+    row.appendChild(text);
+    return { row, setVisible };
+  }
+
+  function buildLegend() {
     const panel = document.createElement('div');
     panel.style.cssText = [
       'position:fixed', 'top:20px', 'right:20px',
@@ -160,57 +274,75 @@
     ].join(';');
     document.body.appendChild(panel);
 
-    items.forEach(({ label, color, objects }) => {
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;';
+    // Strike zone
+    panel.appendChild(makeToggleRow('Strike Zone', '#4488ff', visible => {
+      strikeZoneObjects.forEach(o => { o.visible = visible; });
+    }).row);
 
-      const swatch = document.createElement('div');
-      swatch.style.cssText = `width:10px;height:10px;border-radius:2px;background:${color};flex-shrink:0;`;
+    // Trajectory section header
+    const trajHeader = document.createElement('div');
+    trajHeader.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:4px 0 2px;';
 
-      const text = document.createElement('span');
-      text.textContent = label;
+    const selectBtn = document.createElement('button');
+    selectBtn.textContent = 'Deselect All';
+    selectBtn.style.cssText = 'padding:1px 6px;border:1px solid #555;background:#1a1a1a;color:#aaa;border-radius:3px;cursor:pointer;font-family:monospace;font-size:0.75em;';
 
-      let visible = true;
-      row.addEventListener('click', () => {
-        visible = !visible;
-        objects.forEach(o => { if (o) o.visible = visible; });
-        row.style.opacity = visible ? '1' : '0.35';
-        text.style.textDecoration = visible ? '' : 'line-through';
+    trajHeader.appendChild(selectBtn);
+    panel.appendChild(trajHeader);
+
+    // Per-trajectory rows
+    const trajSetVisible = [];
+    data.trajectories.forEach((traj, i) => {
+      const color = '#' + plasmaColor(0.5).getHexString();
+      const { row, setVisible } = makeToggleRow(traj.label, color, visible => {
+        trajVisible[i] = visible;
+        applyTrace(i);
+        applyBall(i);
+        applyCrossing(i);
+        applyMagnus(i);
       });
-
-      row.appendChild(swatch);
-      row.appendChild(text);
+      trajSetVisible.push(setVisible);
       panel.appendChild(row);
     });
+
+    selectBtn.addEventListener('click', () => {
+      const allOn = trajSetVisible.every((_, i) => trajVisible[i]);
+      trajSetVisible.forEach((set, i) => set(!allOn));
+      selectBtn.textContent = allOn ? 'Select All' : 'Deselect All';
+    });
+
+    // Global toggles
+    const sep = document.createElement('div');
+    sep.style.cssText = 'border-top:1px solid #444;margin:6px 0;';
+    panel.appendChild(sep);
+
+    panel.appendChild(makeToggleRow('Traces', '#aaaaaa', visible => {
+      globalTracesOn.value = visible;
+      data.trajectories.forEach((_, i) => applyTrace(i));
+    }).row);
+    panel.appendChild(makeToggleRow('Balls', '#ffffff', visible => {
+      globalBallsOn.value = visible;
+      data.trajectories.forEach((_, i) => applyBall(i));
+    }).row);
+
+    const hasCrossings = crossingCircles.some(Boolean);
+    const hasMagnus    = magnusArrows.some(Boolean);
+
+    if (hasCrossings) {
+      panel.appendChild(makeToggleRow('Crossings', '#ff4444', visible => {
+        globalCrossingsOn.value = visible;
+        data.trajectories.forEach((_, i) => applyCrossing(i));
+      }).row);
+    }
+    if (hasMagnus) {
+      panel.appendChild(makeToggleRow('Magnus Dir', '#00ff88', visible => {
+        globalMagnusOn.value = visible;
+        data.trajectories.forEach((_, i) => applyMagnus(i));
+      }, false).row);
+    }
   }
 
-  const legendItems = [
-    { label: 'Strike Zone', color: '#4488ff', objects: strikeZoneObjects },
-  ];
-  data.trajectories.forEach((traj, i) => {
-    legendItems.push({
-      label: traj.label,
-      color: '#' + plasmaColor(0.5).getHexString(),
-      objects: [trajectoryLines[i], balls[i]],
-    });
-  });
-  data.crossings.forEach((c, i) => {
-    if (crossingCircles[i]) {
-      const label = data.trajectories.length > 1
-        ? 'Crossing: ' + data.trajectories[i].label
-        : 'Crossing Point';
-      legendItems.push({ label, color: '#ff4444', objects: [crossingCircles[i]] });
-    }
-  });
-  data.trajectories.forEach((traj, i) => {
-    if (magnusArrows[i]) {
-      const label = data.trajectories.length > 1
-        ? 'Magnus dir: ' + traj.label
-        : 'Magnus Direction';
-      legendItems.push({ label, color: '#00ff88', objects: [magnusArrows[i]] });
-    }
-  });
-  buildLegend(legendItems);
+  buildLegend();
 
   // Animation state
   let playing = false;
@@ -223,6 +355,8 @@
     data.trajectories.forEach((traj, ti) => {
       const f = traj.frames[Math.min(frameIndex, traj.frames.length - 1)];
       balls[ti].position.set(f[0], f[1], f[2]);
+      const drawCount = frameIndex === 0 ? 0 : Math.min(frameIndex + 1, traj.x.length);
+      trajectoryGeos[ti].setDrawRange(0, drawCount);
       if (magnusArrows[ti] && traj.magnusDirections) {
         const dir = traj.magnusDirections[Math.min(frameIndex, traj.magnusDirections.length - 1)];
         const p = balls[ti].position;
@@ -252,7 +386,7 @@
   slider.type = 'range';
   slider.min = 0;
   slider.max = maxFrames - 1;
-  slider.value = maxFrames - 1;
+  slider.value = 0;
   slider.style.cssText = 'width:260px;cursor:pointer;';
   ui.appendChild(slider);
 
@@ -278,7 +412,7 @@
     setFrame(parseInt(slider.value));
   });
 
-  setFrame(maxFrames - 1);
+  setFrame(0);
 
   function animate(ts) {
     requestAnimationFrame(animate);

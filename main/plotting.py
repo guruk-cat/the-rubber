@@ -124,7 +124,6 @@ class Trajectory3DPlot:
   def _resample(self, traj, frame_dt_s):
     t = traj[:, 0]
     t_uniform = numpy.arange(t[0], t[-1], frame_dt_s)
-    t_uniform = numpy.append(t_uniform, t[-1])  # ensure final data point is always included
     return numpy.column_stack([
       t_uniform,
       *[numpy.interp(t_uniform, t, traj[:, c]) for c in range(1, traj.shape[1])],
@@ -158,27 +157,26 @@ class Trajectory3DPlot:
       go.Figure(data=static_traces + line_traces + final_balls, layout=self.layout).show()
       return
 
-    # Animated mode: write a Three.js HTML file to avoid Plotly's per-frame scene rebuild
     frame_dt_s = 1 / fps
     anim_arrays = [self._resample(a, frame_dt_s) for a in arrays]
 
     t_min = min(a[0, 0] for a in arrays)
     t_span = max(max(a[-1, 0] for a in arrays) - t_min, 1e-9)
     
-    magnus_directions = self._magnus_points(anim_arrays, norm_length=0.1) if show_magnus else [None] * len(anim_arrays)
+    magnus_directions = self._magnus_points(anim_arrays, 0.05) if show_magnus else [None] * len(anim_arrays)
 
     payload = {
       'trajectories': [
         {
           'label': lbl,
-          'x': a[:, 1].tolist(),
-          'y': a[:, 2].tolist(),
-          'z': a[:, 3].tolist(),
-          't_norm': ((a[:, 0] - t_min) / t_span).tolist(),
+          'x': sa[:, 1].tolist(),
+          'y': sa[:, 2].tolist(),
+          'z': sa[:, 3].tolist(),
+          't_norm': ((sa[:, 0] - t_min) / t_span).tolist(),
           'frames': sa[:, 1:4].tolist(),
-          'magnusDirections': mo,
+          'magnusDirections': md,
         }
-        for a, sa, lbl, mo in zip(arrays, anim_arrays, labels, magnus_directions)
+        for sa, lbl, md in zip(anim_arrays, labels, magnus_directions)
       ],
       'strikeZone': {
         'halfWidth': _STRIKE_ZONE_HALF_WIDTH,
