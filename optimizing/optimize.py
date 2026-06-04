@@ -35,7 +35,7 @@ def si_mag(quant):
 
 k_unit = 'kg*s/m'
 k_init = Q_(1.0e-3, k_unit)       # arbitrary initial value for constant K
-delta_k_ratio = 0.01            # delta K is 1% of K; used in error compute
+delta_k_ratio = 0.0001            # delta K is 0.01% of K; used in error compute
 init_step_fraction = 0.1        # used to calibrate learning rate for first epoch
 
 estimated_flight_time = Q_(0.45, "second")
