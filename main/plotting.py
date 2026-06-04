@@ -127,12 +127,22 @@ class Trajectory3DPlot:
     t_uniform = numpy.append(t_uniform, t[-1])  # ensure final data point is always included
     return numpy.column_stack([
       t_uniform,
-      numpy.interp(t_uniform, t, traj[:, 1]),
-      numpy.interp(t_uniform, t, traj[:, 2]),
-      numpy.interp(t_uniform, t, traj[:, 3]),
+      *[numpy.interp(t_uniform, t, traj[:, c]) for c in range(1, traj.shape[1])],
     ])
 
-  def plot(self, trajectories, extra_traces=None, animate=False, fps=30, labels=None):
+  def _magnus_points(self, arrays, norm_length):
+    result = []
+    for a in arrays:
+      if a.shape[1] < 13:
+        result.append(None)
+        continue
+      magnus = a[:, 10:13]
+      norms = numpy.linalg.norm(magnus, axis=1, keepdims=True)
+      safe_norms = numpy.where(norms < 1e-12, 1.0, norms)
+      result.append((magnus / safe_norms * norm_length).tolist())
+    return result
+    
+  def plot(self, trajectories, extra_traces=None, animate=False, fps=60, labels=None, show_magnus=False):
     arrays = [numpy.stack(t) for t in trajectories]
     labels = labels or [f'Trajectory {i + 1}' for i in range(len(arrays))]
     t_ranges = [(a[0, 0], a[-1, 0]) for a in arrays]
@@ -154,6 +164,8 @@ class Trajectory3DPlot:
 
     t_min = min(a[0, 0] for a in arrays)
     t_span = max(max(a[-1, 0] for a in arrays) - t_min, 1e-9)
+    
+    magnus_directions = self._magnus_points(anim_arrays, norm_length=0.1) if show_magnus else [None] * len(anim_arrays)
 
     payload = {
       'trajectories': [
@@ -164,8 +176,9 @@ class Trajectory3DPlot:
           'z': a[:, 3].tolist(),
           't_norm': ((a[:, 0] - t_min) / t_span).tolist(),
           'frames': sa[:, 1:4].tolist(),
+          'magnusDirections': mo,
         }
-        for a, sa, lbl in zip(arrays, anim_arrays, labels)
+        for a, sa, lbl, mo in zip(arrays, anim_arrays, labels, magnus_directions)
       ],
       'strikeZone': {
         'halfWidth': _STRIKE_ZONE_HALF_WIDTH,

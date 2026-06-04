@@ -6,7 +6,6 @@ import sys
 import yaml
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-
 from phys import Simulation, Configuration
 from plotting import Trajectory3DPlot
 
@@ -14,11 +13,11 @@ PLATE_Y = 0.2159  # middle of plate (8.5 inches from back tip); Statcast 2026+
 
 def terminate(record):
     state = record[-1]
-    if state[3] < 0:    # z < 0: ball hit the ground
+    if state[3] < 0:
         return True
-    if state[2] < -1:   # y < -1: ball is at catcher position
+    if state[2] < -1:  
         return True
-    if state[0] > 10:   # t > 10s: safety valve
+    if state[0] > 5:    # safety valve  
         return True
     return False
 
@@ -45,13 +44,15 @@ def main():
             cfg = yaml.safe_load(f)
 
         sim = Simulation()
-        launch = Configuration()
-
         if 'simulation' in cfg:
             sim.configure(cfg['simulation'])
+        sim.record_magnus()     # record acceleration from magnus force at every time step
+
+        launch = Configuration()
         launch.configure(cfg['launch'])
 
         trajectory = sim.run(launch, terminate)
+        trajectory = [numpy.append(state, sim.extra.record[i]) for i, state in enumerate(trajectory)]
         trajectories.append(trajectory)
 
         name = pathlib.Path(config_path).name
@@ -63,7 +64,7 @@ def main():
     if args.plot:
         labels = [pathlib.Path(p).stem for p in config_paths]
         plotter = Trajectory3DPlot()
-        plotter.plot(trajectories, labels=labels, animate=(args.plot == 'animated'))
+        plotter.plot(trajectories, labels=labels, animate=(args.plot == 'animated'), show_magnus=True)
 
 
 if __name__ == '__main__':

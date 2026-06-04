@@ -137,6 +137,19 @@
     return group;
   });
 
+  function buildMagnusArrow() {
+    const arrow = new THREE.ArrowHelper(
+      new THREE.Vector3(0, 1, 0),  // placeholder direction
+      new THREE.Vector3(0, 0, 0),  // placeholder origin
+      0.3, 0x00ff88, 0.08, 0.05
+    );
+    scene.add(arrow);
+    return arrow;
+  }
+  const magnusArrows = data.trajectories.map(traj =>
+    traj.magnusDirections ? buildMagnusArrow() : null
+  );
+
   // Legend
   function buildLegend(items) {
     const panel = document.createElement('div');
@@ -189,6 +202,14 @@
       legendItems.push({ label, color: '#ff4444', objects: [crossingCircles[i]] });
     }
   });
+  data.trajectories.forEach((traj, i) => {
+    if (magnusArrows[i]) {
+      const label = data.trajectories.length > 1
+        ? 'Magnus dir: ' + traj.label
+        : 'Magnus Direction';
+      legendItems.push({ label, color: '#00ff88', objects: [magnusArrows[i]] });
+    }
+  });
   buildLegend(legendItems);
 
   // Animation state
@@ -202,6 +223,12 @@
     data.trajectories.forEach((traj, ti) => {
       const f = traj.frames[Math.min(frameIndex, traj.frames.length - 1)];
       balls[ti].position.set(f[0], f[1], f[2]);
+      if (magnusArrows[ti] && traj.magnusDirections) {
+        const dir = traj.magnusDirections[Math.min(frameIndex, traj.magnusDirections.length - 1)];
+        const p = balls[ti].position;
+        magnusArrows[ti].position.set(p.x, p.y, p.z);
+        magnusArrows[ti].setDirection(new THREE.Vector3(dir[0], dir[1], dir[2]).normalize());
+      }
     });
     slider.value = frameIndex;
     timeLabel.textContent = 't = ' + (frameIndex / fps).toFixed(3) + ' s';
