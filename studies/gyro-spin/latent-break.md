@@ -23,9 +23,9 @@ Use the right-hand rule for determining the spin axis. For example, a pure back-
 
 The Magnus term is defined as proportional to the cross product of the spin vector and the velocity vector. The Magnus coefficient $\beta$ controls the magnitude of the force:
 
-$$ \vec{F}_{magnus} = m \cdot \beta \cdot \vec{\omega} \times \vec{v}$$
+$$ \vec{F}_{magnus} =\beta \cdot \vec{\omega} \times \vec{v}$$
 
-$$ \vec{a} = \beta \cdot \vec{\omega} \times \vec{v}$$
+$$ \vec{a} = \beta \cdot \frac{\vec{\omega} \times \vec{v}}{m}$$
 
 ## Gyro spin
 

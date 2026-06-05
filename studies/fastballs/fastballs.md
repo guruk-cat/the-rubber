@@ -18,9 +18,9 @@ If the ball travels with backspin, this means that the spin axis is pointing rou
 
 The Magnus force caused by the spin of the baseball can be expressed as:
 
-$$ \vec{F}_{magnus} = m \cdot \beta \cdot \vec{\omega} \times \vec{v} $$
+$$ \vec{F}_{magnus} = \beta \cdot \vec{\omega} \times \vec{v} $$
 
-where $m$ is the ball's mass, $\beta$ a constant; the force is proportional to the cross product of the spin and velocity vectors. In our coordinate system, the ball travels from mound to plate in the $-y$ direction. This means that, for a righty pitcher, the cross product yields a vector that points roughly in $+z$, or towards the sky. This is what produces the "ride" as we discussed above.
+where $\beta$ is a constant; the force is proportional to the cross product of the spin and velocity vectors. In our coordinate system, the ball travels from mound to plate in the $-y$ direction. This means that, for a righty pitcher, the cross product yields a vector that points roughly in $+z$, or towards the sky. This is what produces the "ride" as we discussed above.
 
 ### 2.2. What we know from trackings
 
@@ -31,6 +31,8 @@ But if this is true (which we will test below), it would mean that as the ball n
 If our math is correct, a fastball isn't fast only because the pitcher throws it hard; it actually crosses the plate faster than what one would expect from release speed alone! Below, we'll test two things: (1) whether this actually happens, and (2) if it does, whether the effect is significant enough to make the ball more difficult to hit.
 
 ## 3. Testing
+
+**Update. 2026-06-05.** The following tests were done with the squared velocity Magnus force model. New tests with linear velocity model should be done. If a meaningful difference is observed, docs will be updated.
 
 ### 3.1. Simulating a four-seamer
 Two simulations have been run with a configuration produced from a four-seam fastball thrown by Freddy Peralta on 2026-05-12. The pitch had a release speed of 95.3 mph and spin rate of 2434.0 rpm. Peralta threw with an arm slot of 37.2 degrees, and is right-handed. 
