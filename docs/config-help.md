@@ -121,7 +121,9 @@ training:
   az: "-15.678901 ft/s**2"
 ```
 
-Not read by `launch.py` or `Simulation` — ignored outside the optimizer.
+This block can also contain `plate_x` and `plate_z` from Statcast data. These are the `x` and `z` positions when ball is crossing the strike zone. Whether this is included depends on which kind of error calculation is intended on the sample.
+
+The block is not read by `launch.py` or `Simulation` — ignored outside the optimizer.
 
 ## Full example
 
