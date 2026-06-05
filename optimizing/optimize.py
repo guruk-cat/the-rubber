@@ -19,10 +19,6 @@ ureg = pint.UnitRegistry()
 Q_ = ureg.Quantity  # type: ignore[misc]
 pint.set_application_registry(ureg)
 
-xhat = numpy.array([1, 0, 0], dtype=float)
-yhat = numpy.array([0, 1, 0], dtype=float)
-zhat = numpy.array([0, 0, 1], dtype=float)
-
 report_d_error = "inch"
 
 def si_mag(quant):

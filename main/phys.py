@@ -3,7 +3,7 @@ import types
 import pint
 import numpy
 from numpy.linalg import norm
-import sys
+
 
 
 ureg = pint.UnitRegistry()

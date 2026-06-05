@@ -67,7 +67,7 @@ def main():
         name = pathlib.Path(config_path).name
         plate_i = crossing_point(numpy.array(trajectory))
         print(f"[{name}] {len(trajectory)} steps")
-        print(f"t when crossing plate ={trajectory[plate_i][0]:.3f}s")
+        print(f"t when crossing plate   = {trajectory[plate_i][0]:.3f}s")
         print(f"pos when crossing plate =({trajectory[plate_i][1]:.2f}, {trajectory[plate_i][2]:.2f}, {trajectory[plate_i][3]:.2f}) m\n")
 
     if args.plot:

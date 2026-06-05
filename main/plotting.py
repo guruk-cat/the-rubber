@@ -1,7 +1,6 @@
 import json
 import pathlib
 import webbrowser
-
 import plotly.graph_objs as go
 import numpy
 import yaml

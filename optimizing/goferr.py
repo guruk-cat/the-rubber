@@ -2,15 +2,12 @@
 GOFErr stands for "Good Ole Fashioned Error"
 '''
 
-import glob
 import pathlib
 import sys
 import pint
 import numpy
 from math import sqrt
-import yaml
 import os
-import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / 'main'))
 from phys import Simulation, Configuration
@@ -51,6 +48,8 @@ def terminate(record):
     return False
 
 
+
+# MATH STUFF
 
 def get_plate_xz(cfgs):
     result = []

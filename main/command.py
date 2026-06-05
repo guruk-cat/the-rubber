@@ -3,7 +3,6 @@ import pathlib
 import sys
 import os
 import yaml
-import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 
@@ -120,7 +119,7 @@ class Menu:
             if isinstance(action, Menu):
                 action.run_menu()   # recurse
             else:
-                action()            # call function
+                action()
                 return
         else:
             self.run_menu(inject="Not a valid option...", new_page=new_page)
