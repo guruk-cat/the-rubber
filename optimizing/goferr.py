@@ -14,7 +14,7 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / 'main'))
 from phys import Simulation, Configuration
-from optimize import load_configs, select_batches, squared_err
+from optimize import load_configs, select_batches
 
 ureg = pint.UnitRegistry()
 Q_ = ureg.Quantity  # type: ignore[misc]
@@ -66,10 +66,14 @@ def crossing_point(traj):
     i = numpy.argmin(numpy.abs(y - si_mag(PLATE_Y)))
     return i
 
-def main():
-    batch_dirs = select_batches()
-    delete_lines(1)
-    errs = []
+def get_error(prediction, reference):
+    # pred, true: (N, M) arrays. Returns a length-N array of per-sample squared errors.
+    diffs = numpy.asarray(prediction) - numpy.asarray(reference)
+    errors = [numpy.linalg.norm(diff) for diff in diffs]
+    return numpy.array(errors)
+
+def compute(batch_dirs):
+    batch_errs = []
     for d in batch_dirs:
         print(f"Computing errors for [{d.name}]")
         cfgs = load_configs([str(d / '*.yaml')])
@@ -85,17 +89,19 @@ def main():
             crossing_i = crossing_point(trajectory)
             pred_plates.append([trajectory[crossing_i][1], trajectory[crossing_i][3]])
             delete_lines(1)
-            print(f"pred: {trajectory[crossing_i][1]}, {trajectory[crossing_i][3]}")
-            print(f"true: {true_plates[i]}\n")
         numpy.array(pred_plates)
-        err = numpy.mean(squared_err(pred_plates, true_plates))
-        errs.append(err)
+        err_mean = numpy.mean(get_error(pred_plates, true_plates))
+        batch_errs.append(err_mean)
         delete_lines(1)
     
-    displacement = Q_(sqrt(numpy.mean(numpy.array(errs))), "meter")
+    displacement = Q_(numpy.mean(batch_errs), "meter")
     displacement = displacement.to(report_d_error).magnitude
     print(f"Average error when crossing plate: {displacement:.2f} ({report_d_error})")
 
+def main():
+    batch_dirs = select_batches()
+    delete_lines(1)
+    compute(batch_dirs)
 
 if __name__ == '__main__':
     main()
