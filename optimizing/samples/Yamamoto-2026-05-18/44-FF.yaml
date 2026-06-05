@@ -24,3 +24,5 @@ training:
   ax: -11.425181 ft/s**2
   ay: 37.714561 ft/s**2
   az: -11.894204 ft/s**2
+  plate_x: -0.781892 ft
+  plate_z: 3.012928 ft

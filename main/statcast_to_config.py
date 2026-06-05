@@ -127,10 +127,14 @@ def _build_training(row):
     ax = float(_require(row, 'ax', 'acceleration x'))
     ay = float(_require(row, 'ay', 'acceleration y'))
     az = float(_require(row, 'az', 'acceleration z'))
+    plate_x = float(_require(row, 'plate_x', 'position x at plate'))
+    plate_z = float(_require(row, 'plate_z', 'position z at plate'))
     return {
         'ax': f"{ax:.6f} ft/s**2",
         'ay': f"{ay:.6f} ft/s**2",
         'az': f"{az:.6f} ft/s**2",
+        'plate_x': f"{plate_x:.6f} ft",
+        'plate_z': f"{plate_z:.6f} ft",
     }
 
 
