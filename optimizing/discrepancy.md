@@ -1,7 +1,7 @@
 # Discrepancy Between Optimizer and Closed Solution
 
 Updates:
-- iscrepancy issues have been solved. Well, as far as I'm aware. (2026-06-05, morning)
+- Discrepancy issues have been solved.
 - The RMS errors and displacement errors shown in this document were computed before the `phys.py` code got its bug fixes relating to linear-velocity Magnus model (see commit #980f6cb). The $K$ value that yields the global minimum for $E(K)$ may be the same (need to check on this), but the actual errors are wrong. Will be updated at some point. (2026-06-05, afternoon)
 
 ## Background
