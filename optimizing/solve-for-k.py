@@ -6,6 +6,7 @@ import numpy
 import yaml
 import os
 import time
+from math import sqrt
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / 'main'))
 from phys import Simulation, Configuration
@@ -127,6 +128,26 @@ def compute_single_sim(cfg):
 
     return cross, dv_dt
 
+def check_with_k(k, cfg):
+    # Run simulation with Magnus coefficient k
+    sim = Simulation()
+    sim.config.mangus_coefficient = Q_(k, k_unit)
+    launch = Configuration()
+    launch.configure(cfg['launch'])
+    return sim.point_run(launch)
+
+def squared_err(prediction, reference):
+    # pred, true: (N, M) arrays. Returns a length-N array of per-sample squared errors.
+    diff = numpy.asarray(prediction) - numpy.asarray(reference)
+    return numpy.sum(diff**2, axis=1)
+
+def percent_error(reference, new):
+    return abs((reference - new) / reference)
+
+def rms_to_displacement(rms_acc, t):
+    # Estimates max displacement error
+    return 0.5 * rms_acc * t ** 2
+
 def main():
     batch_dirs = select_batches()
     batches = []
@@ -157,7 +178,24 @@ def main():
         delete_lines(1)
     
     k = r_dot_c_sum / c_squared_sum
-    print(f"Final K = {k:.8e} ({k_unit})")
+    print(f"\nCompute complete. Calculating errors...")
+    
+    rms_sum = 0
+    for batch in batches:
+        preds = []
+        name, cfgs, refs = batch
+        for cfg in cfgs:
+            pred = check_with_k(k, cfg)
+            preds.append(pred)
+        rms_sum += sqrt(numpy.mean(squared_err(preds, refs)))
+    rms_total = rms_sum / len(batches)
+    d_1 = Q_(rms_to_displacement(rms_total, 0.40), "meter").to(report_d_error).magnitude
+    d_2 = Q_(rms_to_displacement(rms_total, 0.45), "meter").to(report_d_error).magnitude
+    
+    delete_lines(1)
+    print(f"Final K                             = {k:.12e} ({k_unit})")
+    print(f"Final RMS error across all bacthes  = {rms_total:.12f} m/s²")
+    print(f"Est. ceiling of displacement error  = {d_1:.1f} ~ {d_2:.1f} ({report_d_error})")
 
 
 if __name__ == '__main__':

@@ -187,7 +187,7 @@ def gradient_step(cfgs, true_acc, k, lr, info):
     pred_k_arr = numpy.array(pred_k)
     pred_k_delta_arr = numpy.array(pred_k_delta)
 
-    errs_k = squared_err(pred_k_arr,       true_acc)
+    errs_k = squared_err(pred_k_arr, true_acc)
     errs_k_delta = squared_err(pred_k_delta_arr, true_acc)
 
     grad = de_dk(errs_k, errs_k_delta, delta_k)
