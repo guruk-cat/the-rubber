@@ -20,9 +20,6 @@ def si_mag(quantity):
 # middle of plate; Statcast 2026+
 PLATE_Y = Q_(8.5, "inch")
 
-# new value from optimizer, using linear velocity for magnus force
-NEW_MAGNUS_K = Q_(6.722464088244e-05, "kg * s / m") 
-
 def terminate(record):
     state = record[-1]
     if state[3] < 0:
@@ -58,7 +55,6 @@ def main():
         sim = Simulation()
         if 'simulation' in cfg:
             sim.configure(cfg['simulation'])
-        sim.config.magnus_coefficient = NEW_MAGNUS_K
         sim.record_magnus()     # record acceleration from magnus force at every time step
 
         launch = Configuration()
