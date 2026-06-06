@@ -34,16 +34,16 @@ In the CLI tool, you must specify a pitcher by their name, the date of the game,
 While you can read the Python scripts and DIY a process of your own, the easiest way to run a simulation (or many of them) is by using `main/launch.py`. It takes as its first argument the path to your configuration files. You can run one pitch at a time, like:
 
 ```bash
-python main/launch.py configs/Scott-2026-05-23/5-SL.yaml
+python main/launch.py configs/clean-inning/2-FS.yaml --plot
 ```
 
 or you can run a whole bunch of them, like:
 
 ```bash
-python main/launch.py configs/Scott-2026-05-23/*
+python main/launch.py "configs/clean-inning/*" --plot
 ```
 
-Additionally, use a `--plot` flag to generate a 3D plot. By default, the plot will be generated in `animated` mode, which is pretty fancy. It supports 60fps live-time animation, a mock baseball field, a time slider, Magnus force direction indicator, strike zone crossings, and so on. Below is an example.
+Use a `--plot` flag to generate a 3D plot. By default, the plot will be generated in `animated` mode, which is pretty fancy. It supports 60fps live-time animation, a mock baseball field, a time slider, Magnus force direction indicator, strike zone crossings, and so on. Below is an example.
 
 ### 2.2. Example
 
